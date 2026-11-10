@@ -79,6 +79,15 @@ html[data-motion="reduce"] *{transition:none !important}
 .morse-out{font-size:1.2rem;letter-spacing:.12em;line-height:1.6}
 #detectar{background:var(--accent);color:#2b2e32;border-color:var(--accent);font-size:.95rem;font-weight:600}
 #detectar:hover,#detectar:active{background:var(--accent);filter:brightness(1.1)}
+.tabela{display:grid;grid-template-columns:repeat(auto-fill,minmax(5rem,1fr));gap:.5rem;margin-bottom:.5rem}
+.tabela.pros{grid-template-columns:repeat(auto-fill,minmax(9.5rem,1fr))}
+.cel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;padding:.6rem .3rem;flex:none}
+.cel strong{font-size:1.3rem;color:var(--text)}
+.cel span{color:var(--accent);letter-spacing:.12em;font-size:.95rem}
+.cel small{color:var(--muted);font-size:.75rem;text-align:center}
+.info{margin:0 0 1.5rem;padding-left:1.2rem;line-height:1.7}
+.info li{margin-bottom:.4rem}
+.info b{color:var(--accent);font-weight:600}
 .caret{width:2px;height:2.2rem;border-radius:1px;background:var(--text);margin:0 .1rem}
 .btns{display:flex;flex-wrap:wrap;gap:.5rem}
 .btns button{flex:1 1 9rem;font-size:1rem}
@@ -102,6 +111,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
   <div class="tabs" role="tablist">
     <button type="button" role="tab" id="tab-dec" aria-selected="true" aria-controls="pane-dec">Decodificar</button>
     <button type="button" role="tab" id="tab-enc" aria-selected="false" aria-controls="pane-enc">Codificar</button>
+    <button type="button" role="tab" id="tab-apr" aria-selected="false" aria-controls="pane-apr">Aprender</button>
   </div>
 
   <div id="pane-dec">
@@ -134,6 +144,39 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       <button id="copiar" type="button">Copiar Morse</button>
       <button id="usar" type="button">Abrir no decodificador</button>
     </div>
+  </div>
+
+  <div id="pane-apr" hidden>
+    <p class="hint">Toque em uma letra, número, sinal ou prossinal para ouvir. O som usa a velocidade, a frequência e o volume dos ajustes abaixo.</p>
+    <h2>Alfabeto, números e pontuação</h2>
+    <div class="tabela" id="tabela"></div>
+    <h2 style="margin-top:1.5rem">Prossinais</h2>
+    <p class="hint" style="margin-bottom:.6rem">Sinais de serviço. Cada um é enviado sem pausa entre as letras, como se fosse um símbolo só (exceto o CQ).</p>
+    <div class="tabela pros" id="pros"></div>
+    <h2 style="margin-top:1.5rem">Como aprender</h2>
+    <ul class="info">
+      <li>Aprenda pelo <b>som</b>, não pelo desenho. Ouça cada letra como um ritmo ("di-dá") em vez de contar pontos e traços.</li>
+      <li><b>Método Koch:</b> comece já em velocidade alta, com só duas letras, e acrescente uma letra nova quando acertar quase tudo.</li>
+      <li><b>Método Farnsworth:</b> toque cada letra em velocidade real, mas com pausas longas entre elas, e vá encurtando as pausas aos poucos.</li>
+      <li>Treine pouco e todo dia: 10 a 15 minutos rendem mais que uma hora de vez em quando.</li>
+      <li>Neste site: escreva uma palavra na aba Codificar, escolha uma velocidade baixa e use <b>Tocar mensagem</b>. Depois tente decodificar de ouvido.</li>
+    </ul>
+    <h2>Um pouco de história</h2>
+    <ul class="info">
+      <li><b>1830s a 1844:</b> o pintor Samuel Morse e o mecânico Alfred Vail desenvolvem o telégrafo e um código de pontos e traços. Vail teve papel central no alfabeto original, hoje chamado de Morse americano.</li>
+      <li><b>24 de maio de 1844:</b> a primeira mensagem pública vai de Washington a Baltimore: "What hath God wrought" ("O que Deus fez").</li>
+      <li><b>1848 a 1865:</b> o alemão Friedrich Gerke simplifica o código para uso europeu. A versão revisada vira o Código Morse Internacional, oficializado em 1865, o que usamos hoje.</li>
+      <li><b>1906:</b> uma conferência internacional de rádio, em Berlim, adota o SOS como pedido de socorro.</li>
+      <li><b>1912:</b> o Titanic transmite CQD e SOS.</li>
+      <li><b>1999:</b> o sistema global de socorro por satélite (GMDSS) substitui o Morse obrigatório no mar. Entre radioamadores, o Morse (CW) continua vivo.</li>
+    </ul>
+    <h2>Curiosidades</h2>
+    <ul class="info">
+      <li>O <b>E</b> é um único ponto e o <b>T</b> um único traço: as letras mais comuns no inglês ganharam os códigos mais curtos.</li>
+      <li>O <b>SOS</b> não é sigla. Três pontos, três traços e três pontos foram escolhidos por serem fáceis de lembrar e de reconhecer.</li>
+      <li>A velocidade em <b>WPM</b> usa a palavra PARIS (50 unidades de tempo) como referência. A 12 WPM, um ponto dura 100 ms e um traço 300 ms.</li>
+      <li>Hoje o padrão é mantido pela ITU, na recomendação ITU-R M.1677-1.</li>
+    </ul>
   </div>
 
   <div class="settings">
@@ -607,7 +650,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       return w.split("").map(function(ch){ return REV[ch]; }).filter(Boolean).join("/");
     }).filter(Boolean).join("//");
   }
-  function currentMorse(){ return mode === "enc" ? encodeText(input2.value) : input.value; }
+  function currentMorse(){ return mode === "enc" ? encodeText(input2.value) : (mode === "apr" ? "" : input.value); }
   function renderEnc(){
     var m = encodeText(input2.value);
     visual2.textContent = "";
@@ -630,7 +673,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
   function setMode(m){
     mode = m;
     stopPlay();
-    ["dec", "enc"].forEach(function(k){
+    ["dec", "enc", "apr"].forEach(function(k){
       document.getElementById("pane-" + k).hidden = (k !== m);
       document.getElementById("tab-" + k).setAttribute("aria-selected", String(k === m));
     });
@@ -639,6 +682,45 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
   document.getElementById("tab-dec").addEventListener("click", function(){ setMode("dec"); });
   document.getElementById("tab-enc").addEventListener("click", function(){ setMode("enc"); renderEnc(); });
   input2.addEventListener("input", renderEnc);
+  document.getElementById("tab-apr").addEventListener("click", function(){ setMode("apr"); });
+
+  function tocarMorse(m){
+    var c = getCtx();
+    if(!c) return;
+    var u = unit(), t = c.currentTime + 0.05;
+    for(var i = 0; i < m.length; i++){
+      var ch = m[i];
+      if(ch === "." || ch === "-"){
+        var d = (ch === "." ? 1 : 3) * u;
+        tone(c, t, d);
+        t += d + u;
+      } else if(ch === "/"){ t += 2 * u; }
+    }
+  }
+  function celula(rotulo, morse, legenda){
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "cel";
+    b.setAttribute("aria-label", rotulo + (legenda ? ", " + legenda : "") + ": " + morse);
+    var a = document.createElement("strong");
+    a.textContent = rotulo;
+    var s = document.createElement("span");
+    s.textContent = morse.replace(/\./g, "\u2022").replace(/-/g, "\u2013").replace(/\//g, " ");
+    b.appendChild(a);
+    if(legenda){ var g = document.createElement("small"); g.textContent = legenda; b.appendChild(g); }
+    b.appendChild(s);
+    b.addEventListener("click", function(){ tocarMorse(morse); });
+    return b;
+  }
+  var tabela = document.getElementById("tabela"), pros = document.getElementById("pros");
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,?!-:;()'=+@".split("").forEach(function(ch){
+    if(REV[ch]) tabela.appendChild(celula(ch, REV[ch], ""));
+  });
+  [["AR", "Fim da mensagem", ".-.-."], ["SK", "Fim da comunicação", "...-.-"], ["BT", "Pausa ou novo parágrafo", "-...-"],
+   ["KN", "Convite a uma estação específica", "-.--."], ["AS", "Aguarde", ".-..."], ["CT", "Início da mensagem", "-.-.-"],
+   ["HH", "Erro, repita", "........"], ["CQ", "Chamada geral", "-.-./--.-"], ["SOS", "Socorro", "...---..."]].forEach(function(r){
+    pros.appendChild(celula(r[0], r[2], r[1]));
+  });
   document.getElementById("copiar").addEventListener("click", function(ev){
     var b = ev.currentTarget, m = encodeText(input2.value);
     if(!m) return;
@@ -907,7 +989,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     }
     if(typeof s.dec === "string") input.value = s.dec.replace(/[^.\-\/]/g, "");
     if(typeof s.enc === "string") input2.value = s.enc.slice(0, 5000);
-    setMode(s.modo === "enc" ? "enc" : "dec");
+    setMode(s.modo === "enc" || s.modo === "apr" ? s.modo : "dec");
     renderEnc();
   }
   ["input", "change", "click"].forEach(function(t){ document.addEventListener(t, salvar); });
