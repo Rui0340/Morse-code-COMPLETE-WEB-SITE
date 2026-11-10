@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="adaptando">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Código Morse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#34373b; --panel:#2b2e32; --line:#4a4e54; --text:#e6e4df; --muted:#9a9ea5; --accent:#d8b36a;
+  color-scheme: dark;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;min-height:100vh}
+main{max-width:var(--main-w,46rem);margin:0 auto;padding:clamp(1.25rem,5vw,3rem) clamp(1rem,4vw,2rem)}
+h1{font-size:clamp(1.4rem,4.5vw,2rem);font-weight:600;margin:0 0 .4rem;letter-spacing:.02em}
+.hint{color:var(--muted);font-size:.9rem;line-height:1.6;margin:0 0 1.5rem}
+textarea{
+  width:100%;min-height:8rem;resize:vertical;background:var(--panel);color:var(--text);
+  border:1px solid var(--line);border-radius:.6rem;padding:1rem;
+  font:inherit;font-size:1.4rem;letter-spacing:.15em;line-height:1.5;caret-color:var(--accent)
+}
+textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+textarea::placeholder{color:#6d7178;letter-spacing:.15em}
+.keys{display:flex;flex-wrap:wrap;gap:.5rem;margin:.75rem 0 2rem}
+button{
+  flex:1 1 4rem;min-height:var(--btn-h,3rem);background:var(--panel);color:var(--text);border:1px solid var(--line);
+  border-radius:.5rem;font:inherit;font-size:1.2rem;cursor:pointer;touch-action:manipulation
+}
+button:hover{border-color:var(--accent)}
+button:active{background:var(--line)}
+button.small{font-size:.85rem;color:var(--muted)}
+h2{font-size:.95rem;font-weight:400;color:var(--muted);margin:0 0 .6rem}
+.view{
+  min-height:5rem;background:var(--panel);border:1px solid var(--line);border-radius:.6rem;
+  padding:1rem;display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .45rem;margin-bottom:1.5rem
+}
+.dot{width:.9rem;height:.9rem;border-radius:50%;background:var(--accent)}
+.dash{width:2.4rem;height:.9rem;border-radius:.45rem;background:var(--accent)}
+.sep{width:2px;height:1.8rem;background:var(--muted);margin:0 .5rem}
+.sep.w{margin-left:0}
+.empty{color:#6d7178;font-size:.9rem}
+.decoded{min-height:3.2rem;font-size:1.6rem;letter-spacing:.1em;word-break:break-word;margin:0}
+.settings{display:grid;gap:.9rem;background:var(--panel);border:1px solid var(--line);border-radius:.6rem;padding:1rem;margin-bottom:2rem}
+.row{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+.row label{flex:0 0 8rem;color:var(--muted);font-size:.9rem}
+.row input[type=range]{flex:1 1 8rem;min-width:0;accent-color:var(--accent)}
+.row span{color:var(--muted);font-size:.9rem}
+select,input[type=number]{min-height:var(--ctl-h,2.4rem);background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:.4rem;padding:.5rem .6rem;font:inherit;font-size:1rem}
+input[type=number]{width:5.5rem}
+select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none !important}
+html{font-size:var(--root-fs,100%)}
+html.adaptando main{visibility:hidden}
+#carregando{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.25rem;background:var(--bg);color:var(--muted);font-size:.95rem;transition:opacity .25s}
+#carregando.fim{opacity:0;pointer-events:none}
+#carregando p{margin:0}
+.morse-load{display:flex;align-items:center;gap:.5rem}
+.morse-load i{display:block;height:.9rem;border-radius:.45rem;background:var(--accent);animation:pulsa 1.2s ease-in-out infinite}
+.morse-load .p{width:.9rem;border-radius:50%}
+.morse-load .p:nth-child(2){animation-delay:.15s}
+.morse-load .t{width:2.4rem;animation-delay:.3s}
+@keyframes pulsa{0%,100%{opacity:.25}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.morse-load i{animation:none;opacity:1}}
+html[data-input="touch"] button:not([aria-selected]):not(.switch):hover{border-color:var(--line)}
+html[data-input="touch"] .row input[type=range]{height:2rem}
+html[data-device="phone"] .row label{flex:1 0 100%}
+html[data-device="phone"] textarea{font-size:1.25rem}
+html[data-orient="landscape"][data-device="phone"] main{padding-top:1rem;padding-bottom:1rem}
+html[data-motion="reduce"] *{transition:none !important}
+.tabs{display:flex;gap:.5rem;margin:0 0 1.5rem;border-bottom:1px solid var(--line)}
+.tabs button{flex:1 1 0;min-height:var(--btn-h,3rem);border:0;border-bottom:3px solid transparent;border-radius:0;background:none;color:var(--muted);font-size:1rem}
+.tabs button[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent)}
+.morse-out{font-size:1.2rem;letter-spacing:.12em;line-height:1.6}
+#detectar{background:var(--accent);color:#2b2e32;border-color:var(--accent);font-size:.95rem;font-weight:600}
+#detectar:hover,#detectar:active{background:var(--accent);filter:brightness(1.1)}
+.caret{width:2px;height:2.2rem;border-radius:1px;background:var(--text);margin:0 .1rem}
+.btns{display:flex;flex-wrap:wrap;gap:.5rem}
+.btns button{flex:1 1 9rem;font-size:1rem}
+button.switch{position:relative;flex:none;width:3.6rem;height:2rem;min-height:0;padding:0;border:0;border-radius:1rem;transition:background .2s}
+button.switch,button.switch:active{background:#b8433a}
+button.switch[aria-checked="true"],button.switch[aria-checked="true"]:active{background:#2f9e5e}
+button.switch::after{content:"";position:absolute;top:.25rem;left:.25rem;width:1.5rem;height:1.5rem;border-radius:50%;background:#fff;transition:transform .2s}
+button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
+.legend{color:var(--muted);font-size:.85rem;line-height:1.8;margin-top:2rem;border-top:1px solid var(--line);padding-top:1rem}
+.legend b{color:var(--text);font-weight:600}
+</style>
+<noscript><style>#carregando{display:none}html.adaptando main{visibility:visible}</style></noscript>
+</head>
+<body>
+<div id="carregando" role="status" aria-live="polite">
+  <div class="morse-load" aria-hidden="true"><i class="p"></i><i class="p"></i><i class="t"></i></div>
+  <p>Adaptando a interface...</p>
+</div>
+<main>
+  <h1>Código Morse</h1>
+  <div class="tabs" role="tablist">
+    <button type="button" role="tab" id="tab-dec" aria-selected="true" aria-controls="pane-dec">Decodificar</button>
+    <button type="button" role="tab" id="tab-enc" aria-selected="false" aria-controls="pane-enc">Codificar</button>
+  </div>
+
+  <div id="pane-dec">
+  <p class="hint">Escreva apenas ponto, traço e barra. Use <b>/</b> para separar letras e <b>//</b> para separar palavras.</p>
+
+  <label for="entrada" class="hint" style="display:block;margin-bottom:.5rem">Sua mensagem</label>
+  <textarea id="entrada" rows="4" placeholder=".... --- .-.. .-" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
+
+  <div class="keys">
+    <button data-nav="-1" aria-label="Letra anterior">&lt;</button>
+    <button data-k="." aria-label="Ponto">.</button>
+    <button data-k="-" aria-label="Traço">-</button>
+    <button data-k="/" aria-label="Barra">/</button>
+    <button data-k="//" aria-label="Barra dupla">//</button>
+    <button data-nav="1" aria-label="Próxima letra">&gt;</button>
+    <button class="small" data-act="back" aria-label="Apagar último">apagar</button>
+    <button class="small" data-act="clear" aria-label="Limpar tudo">limpar</button>
+  </div>
+
+  </div>
+
+  <div id="pane-enc" hidden>
+    <p class="hint">Escreva um texto normal. Letras, números e pontuação viram código Morse; acentos são ignorados.</p>
+    <label for="entrada2" class="hint" style="display:block;margin-bottom:.5rem">Seu texto</label>
+    <textarea id="entrada2" rows="4" placeholder="Olá, mundo" autocomplete="off" spellcheck="false"></textarea>
+    <h2 style="margin-top:1.5rem">Em código Morse</h2>
+    <div class="view" id="visual2" aria-live="polite"></div>
+    <p class="decoded morse-out" id="morse2" aria-live="polite"></p>
+    <div class="btns" style="margin-bottom:2rem">
+      <button id="copiar" type="button">Copiar Morse</button>
+      <button id="usar" type="button">Abrir no decodificador</button>
+    </div>
+  </div>
+
+  <div class="settings">
+    <div class="row">
+      <label for="sw">Som ao digitar</label>
+      <button type="button" id="sw" class="switch" role="switch" aria-checked="true" aria-label="Som ao digitar"></button>
+      <span id="swv">Ativado</span>
+    </div>
+    <div class="row">
+      <label for="swvoz">Voz do Google</label>
+      <button type="button" id="swvoz" class="switch" role="switch" aria-checked="true" aria-label="Voz do Google"></button>
+      <span id="swvozv">Ativada</span>
+    </div>
+    <div class="row">
+      <label for="lang">Idioma da voz</label>
+      <select id="lang">
+        <option value="pt-BR" selected>Português (Brasil)</option>
+        <option value="pt-PT">Português (Portugal)</option>
+        <option value="en-US">Inglês (EUA)</option>
+        <option value="en-GB">Inglês (Reino Unido)</option>
+        <option value="es-ES">Espanhol (Espanha)</option>
+        <option value="es-MX">Espanhol (América Latina)</option>
+        <option value="fr-FR">Francês</option>
+        <option value="de-DE">Alemão</option>
+        <option value="it-IT">Italiano</option>
+        <option value="ja-JP">Japonês</option>
+        <option value="zh-CN">Chinês</option>
+        <option value="hi-IN">Hindi</option>
+        <option value="ru-RU">Russo</option>
+        <option value="ar-SA">Árabe</option>
+        <option value="ko-KR">Coreano</option>
+      </select>
+      <button type="button" id="detectar" class="small" style="flex:none;min-height:2.6rem;padding:0 .8rem">Detectar localização</button>
+    </div>
+    <p class="hint" id="langnota" style="margin:0"></p>
+    <div class="row">
+      <label for="wpm">Velocidade</label>
+      <select id="wpm">
+        <option value="5">5 WPM</option>
+        <option value="8">8 WPM</option>
+        <option value="10">10 WPM</option>
+        <option value="12" selected>12 WPM</option>
+        <option value="15">15 WPM</option>
+        <option value="18">18 WPM</option>
+        <option value="20">20 WPM</option>
+        <option value="25">25 WPM</option>
+        <option value="30">30 WPM</option>
+        <option value="35">35 WPM</option>
+        <option value="40">40 WPM</option>
+      </select>
+      <input type="number" id="wpmnum" min="1" max="60" step="1" value="12" inputmode="numeric" aria-label="Velocidade em palavras por minuto">
+      <span>WPM</span>
+    </div>
+    <div class="row">
+      <label for="freq">Frequência</label>
+      <input type="range" id="freq" min="200" max="1500" step="1" value="615">
+      <input type="number" id="freqnum" min="200" max="1500" step="1" value="615" inputmode="numeric" aria-label="Frequência em hertz">
+      <span>Hz</span>
+    </div>
+    <div class="row">
+      <label for="vol">Volume</label>
+      <input type="range" id="vol" min="0" max="100" step="1" value="30">
+      <span id="volv">30%</span>
+    </div>
+    <div class="btns">
+      <button id="testar" type="button">Testar som</button>
+      <button id="play" type="button">Tocar mensagem</button>
+      <button id="repetir" type="button">Repetir frase</button>
+      <button id="restaurar" type="button">Restaurar padrões</button>
+    </div>
+  </div>
+
+  <div id="out-dec">
+  <h2>O que você escreveu</h2>
+  <div class="view" id="visual" aria-live="polite"></div>
+
+  <h2>Tradução</h2>
+  <p class="decoded" id="texto" aria-live="polite"></p>
+  </div>
+
+  <p class="legend">
+    <b>.</b> ponto &nbsp; <b>-</b> traço &nbsp; <b>/</b> fim da letra &nbsp; <b>//</b> fim da palavra<br>
+    Qualquer outro caractere é removido automaticamente.
+  </p>
+</main>
+
+<script>
+/* GUI Adapter: detecta o dispositivo, envia o perfil ao console, lê de volta e adapta a interface */
+(function(){
+  var t0 = Date.now();
+  var raiz = document.documentElement;
+  function mm(q){ return !!(window.matchMedia && window.matchMedia(q).matches); }
+
+  var GuiConsole = {
+    ultimo: null,
+    enviar: function(p){
+      this.ultimo = p;
+      if(!window.console) return;
+      console.group("[GUI Adapter] dispositivo detectado");
+      console.log("Perfil enviado ao console:", JSON.stringify(p));
+      if(console.table) console.table(p);
+      console.groupEnd();
+    },
+    ler: function(){
+      var p = this.ultimo;
+      if(window.console && p) console.log("[GUI Console] perfil lido: " + p.tipo + " / " + p.entrada + " / " + p.orientacao + ". Aplicando adaptação.");
+      return p;
+    }
+  };
+
+  function detectar(){
+    var nav = navigator, ua = nav.userAgent || "";
+    var plat = (nav.userAgentData && nav.userAgentData.platform) || nav.platform || "";
+    var so = "Outro";
+    if(/android/i.test(ua)) so = "Android";
+    else if(/iphone|ipad|ipod/i.test(ua) || (/mac/i.test(plat) && nav.maxTouchPoints > 1)) so = "iOS";
+    else if(/win/i.test(plat)) so = "Windows";
+    else if(/mac/i.test(plat)) so = "macOS";
+    else if(/linux|cros|x11/i.test(plat + " " + ua)) so = "Linux";
+    var nv = "Outro";
+    if(/edg/i.test(ua)) nv = "Edge";
+    else if(/opr|opera/i.test(ua)) nv = "Opera";
+    else if(/samsungbrowser/i.test(ua)) nv = "Samsung Internet";
+    else if(/firefox|fxios/i.test(ua)) nv = "Firefox";
+    else if(/chrome|crios/i.test(ua)) nv = "Chrome";
+    else if(/safari/i.test(ua)) nv = "Safari";
+    var grossa = mm("(pointer: coarse)"), fina = mm("(pointer: fine)");
+    var toque = (nav.maxTouchPoints || 0) > 0;
+    var entrada = (grossa && !fina) ? "touch" : ((toque && fina) ? "hybrid" : "mouse");
+    var w = window.innerWidth || raiz.clientWidth, h = window.innerHeight || raiz.clientHeight;
+    return {
+      tipo: w < 600 ? "phone" : (w < 1024 ? "tablet" : "desktop"),
+      entrada: entrada,
+      orientacao: w > h ? "landscape" : "portrait",
+      so: so,
+      navegador: nv,
+      largura: w,
+      altura: h,
+      tela: (screen.width || 0) + "x" + (screen.height || 0),
+      dpr: window.devicePixelRatio || 1,
+      pontosToque: nav.maxTouchPoints || 0,
+      reduzirMovimento: mm("(prefers-reduced-motion: reduce)"),
+      idioma: nav.language || ""
+    };
+  }
+
+  function aplicar(p){
+    var s = raiz.style, toque = p.entrada !== "mouse";
+    raiz.setAttribute("data-device", p.tipo);
+    raiz.setAttribute("data-input", p.entrada);
+    raiz.setAttribute("data-orient", p.orientacao);
+    raiz.setAttribute("data-os", p.so.toLowerCase());
+    raiz.setAttribute("data-motion", p.reduzirMovimento ? "reduce" : "full");
+    s.setProperty("--btn-h", toque ? "3.25rem" : "2.75rem");
+    s.setProperty("--ctl-h", toque ? "2.9rem" : "2.4rem");
+    s.setProperty("--main-w", p.tipo === "phone" ? "100%" : (p.tipo === "tablet" ? "44rem" : "50rem"));
+    s.setProperty("--root-fs", p.tipo === "tablet" ? "106%" : (p.largura >= 1600 ? "112%" : "100%"));
+  }
+
+  function adaptar(){
+    var p = detectar();
+    GuiConsole.enviar(p);
+    aplicar(GuiConsole.ler());
+    return p;
+  }
+  function chaveDe(p){ return [p.tipo, p.entrada, p.orientacao, p.so].join("|"); }
+
+  var chave = chaveDe(adaptar());
+  var timer = null;
+  function readaptar(){
+    clearTimeout(timer);
+    timer = setTimeout(function(){
+      var p = detectar();
+      if(chaveDe(p) === chave) return;
+      chave = chaveDe(p);
+      GuiConsole.enviar(p);
+      aplicar(GuiConsole.ler());
+    }, 150);
+  }
+  window.addEventListener("resize", readaptar);
+  window.addEventListener("orientationchange", readaptar);
+
+  var liberado = false;
+  function liberar(){
+    if(liberado) return;
+    liberado = true;
+    raiz.classList.remove("adaptando");
+    var el = document.getElementById("carregando");
+    if(el){
+      el.classList.add("fim");
+      setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 350);
+    }
+    if(window.console) console.log("[GUI Adapter] interface pronta em " + (Date.now() - t0) + " ms");
+  }
+  function depoisDeEstabilizar(){
+    var falta = Math.max(0, 400 - (Date.now() - t0));
+    setTimeout(function(){
+      if(window.requestAnimationFrame) requestAnimationFrame(function(){ requestAnimationFrame(liberar); });
+      else liberar();
+    }, falta);
+  }
+  if(window.Promise){
+    var fontes = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+    var limite = new Promise(function(r){ setTimeout(r, 1500); });
+    Promise.race([fontes, limite]).then(depoisDeEstabilizar, depoisDeEstabilizar);
+  } else {
+    depoisDeEstabilizar();
+  }
+  setTimeout(liberar, 4000);
+
+  window.GuiAdapter = {
+    perfil: function(){ return GuiConsole.ultimo; },
+    readaptar: function(){ chave = ""; readaptar(); }
+  };
+})();
+</script>
+<script>
+(function(){
+  var MAP = {
+    ".-":"A","-...":"B","-.-.":"C","-..":"D",".":"E","..-.":"F","--.":"G","....":"H","..":"I",
+    ".---":"J","-.-":"K",".-..":"L","--":"M","-.":"N","---":"O",".--.":"P","--.-":"Q",".-.":"R",
+    "...":"S","-":"T","..-":"U","...-":"V",".--":"W","-..-":"X","-.--":"Y","--..":"Z",
+    "-----":"0",".----":"1","..---":"2","...--":"3","....-":"4",".....":"5","-....":"6",
+    "--...":"7","---..":"8","----.":"9",
+    ".-.-.-":".","--..--":",","..--..":"?","-.-.--":"!","-....-":"-","---...":":","-.-.-.":";",
+    "-.--.":"(","-.--.-":")",".----.":"'","-...-":"=",".-.-.":"+",".--.-.":"@"
+  };
+  var input = document.getElementById("entrada");
+  var visual = document.getElementById("visual");
+  var texto = document.getElementById("texto");
+
+  function caretEl(){
+    var s = document.createElement("span");
+    s.className = "caret";
+    return s;
+  }
+  function moveCaret(dir){
+    var v = input.value, j, i;
+    if(dir > 0){
+      j = v.length;
+      for(i = input.selectionEnd + 1; i < v.length; i++){
+        if(v[i - 1] === "/" && v[i] !== "/"){ j = i; break; }
+      }
+    } else {
+      j = 0;
+      for(i = input.selectionStart - 1; i > 0; i--){
+        if(v[i - 1] === "/" && v[i] !== "/"){ j = i; break; }
+      }
+    }
+    input.setSelectionRange(j, j);
+    render();
+  }
+  function refreshCaret(){
+    if(document.activeElement === input && input.value === prev) render();
+  }
+  document.addEventListener("selectionchange", refreshCaret);
+  input.addEventListener("click", refreshCaret);
+  input.addEventListener("keyup", refreshCaret);
+
+  function render(){
+    var v = input.value;
+    prev = v;
+    visual.textContent = "";
+    if(!v){
+      var e = document.createElement("span");
+      e.className = "empty";
+      e.textContent = "Os símbolos aparecem aqui.";
+      visual.appendChild(e);
+    } else {
+      var cp = Math.min(input.selectionStart, v.length);
+      for(var i = 0; i < v.length; i++){
+        if(i === cp) visual.appendChild(caretEl());
+        var c = v[i], s = document.createElement("span");
+        if(c === ".") s.className = "dot";
+        else if(c === "-") s.className = "dash";
+        else { s.className = "sep" + (v[i-1] === "/" ? " w" : ""); }
+        visual.appendChild(s);
+      }
+      if(cp >= v.length) visual.appendChild(caretEl());
+    }
+    var palavras = v.split(/\/{2,}/).map(function(p){
+      return p.split("/").filter(Boolean).map(function(l){ return MAP[l] || "?"; }).join("");
+    }).filter(Boolean);
+    texto.textContent = palavras.join(" ");
+  }
+
+  function clean(){
+    var limpo = input.value.replace(/[^.\-\/]/g, "");
+    if(limpo !== input.value){
+      var pos = input.selectionStart - (input.value.length - limpo.length);
+      input.value = limpo;
+      try{ input.setSelectionRange(pos, pos); }catch(e){}
+    }
+    render();
+  }
+
+  var prev = "";
+  var wpm = document.getElementById("wpm");
+  var freq = document.getElementById("freq");
+  var freqnum = document.getElementById("freqnum");
+  var vol = document.getElementById("vol");
+  var volv = document.getElementById("volv");
+  var playBtn = document.getElementById("play");
+  var ctx = null, playing = [], endTimer = null;
+
+  function getCtx(){
+    if(!ctx){
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return null;
+      ctx = new AC();
+    }
+    if(ctx.state === "suspended") ctx.resume();
+    return ctx;
+  }
+  function unit(){ return 1.2 / curWpm; }
+  function tone(c, start, dur){
+    var o = c.createOscillator(), g = c.createGain();
+    var peak = Number(vol.value) / 100 * 0.5, r = 0.008;
+    var d = Math.max(dur, 2 * r + 0.005);
+    o.type = "sine";
+    o.frequency.value = Number(freq.value);
+    g.gain.setValueAtTime(0, start);
+    g.gain.linearRampToValueAtTime(peak, start + r);
+    g.gain.setValueAtTime(peak, start + d - r);
+    g.gain.linearRampToValueAtTime(0, start + d);
+    o.connect(g); g.connect(c.destination);
+    o.start(start); o.stop(start + d + 0.02);
+    return o;
+  }
+  function beep(ch, force){
+    if(ch !== "." && ch !== "-") return;
+    if(!force && !soundOn) return;
+    var c = getCtx();
+    if(!c) return;
+    tone(c, c.currentTime + 0.01, unit() * (ch === "." ? 1 : 3));
+  }
+  function stopPlay(){
+    playing.forEach(function(o){ try{ o.stop(); }catch(e){} });
+    playing = [];
+    clearTimeout(endTimer);
+    playBtn.textContent = "Tocar mensagem";
+  }
+  function playMessage(){
+    if(playing.length){ stopPlay(); return; }
+    var c = getCtx();
+    if(!c) return;
+    var u = unit(), t = c.currentTime + 0.05, first = true;
+    currentMorse().split(/\/{2,}/).forEach(function(w){
+      var letters = w.split("/").filter(Boolean);
+      if(!letters.length) return;
+      if(!first) t += 7 * u;
+      first = false;
+      letters.forEach(function(l, li){
+        if(li > 0) t += 3 * u;
+        for(var i = 0; i < l.length; i++){
+          var d = (l[i] === "." ? 1 : 3) * u;
+          playing.push(tone(c, t, d));
+          t += d + (i < l.length - 1 ? u : 0);
+        }
+      });
+    });
+    if(!playing.length) return;
+    playBtn.textContent = "Parar";
+    endTimer = setTimeout(stopPlay, (t - c.currentTime) * 1000 + 100);
+  }
+
+  freq.addEventListener("input", function(){ freqnum.value = freq.value; });
+  freqnum.addEventListener("input", function(){
+    var n = Number(freqnum.value);
+    if(n >= 200 && n <= 1500) freq.value = n;
+  });
+  freqnum.addEventListener("change", function(){
+    var n = Math.min(1500, Math.max(200, Math.round(Number(freqnum.value)) || 615));
+    freqnum.value = n; freq.value = n;
+    beep(".", true);
+  });
+  vol.addEventListener("input", function(){ volv.textContent = vol.value + "%"; });
+  var curWpm = 12, soundOn = true, voiceOn = true;
+  var wpmnum = document.getElementById("wpmnum");
+  var sw = document.getElementById("sw");
+  var swv = document.getElementById("swv");
+  var testBtn = document.getElementById("testar");
+
+  function syncSelect(n){
+    var opt = wpm.querySelector('option[value="' + n + '"]');
+    if(!opt){
+      var old = wpm.querySelector("option[data-custom]");
+      if(old) old.remove();
+      opt = document.createElement("option");
+      opt.value = String(n);
+      opt.textContent = n + " WPM";
+      opt.setAttribute("data-custom", "1");
+      wpm.appendChild(opt);
+    }
+    wpm.value = String(n);
+  }
+  function setWpm(n){
+    n = Math.min(60, Math.max(1, Math.round(Number(n)) || 12));
+    curWpm = n;
+    wpmnum.value = n;
+    syncSelect(n);
+  }
+  function speak(t, force){
+    if((!voiceOn && !force) || !t || !window.speechSynthesis) return;
+    var s = window.speechSynthesis;
+    s.cancel();
+    var u = new SpeechSynthesisUtterance(t);
+    u.lang = curLang;
+    var vs = s.getVoices();
+    var br = vs.filter(function(x){ return x.lang.replace("_", "-").toLowerCase() === curLang.toLowerCase(); });
+    if(!br.length){
+      var pre = curLang.slice(0, 2).toLowerCase();
+      br = vs.filter(function(x){ return x.lang.slice(0, 2).toLowerCase() === pre; });
+    }
+    var voz = br.filter(function(x){ return /google/i.test(x.name); })[0] || br[0];
+    if(voz) u.voice = voz;
+    s.speak(u);
+  }
+  function decodeWord(s){
+    return s.split("/").filter(Boolean).map(function(l){ return MAP[l] || ""; }).join("");
+  }
+  function react(v, q){
+    var ch = v[q - 1];
+    if(ch === "." || ch === "-"){ beep(ch); return; }
+    if(ch !== "/") return;
+    var before = v.slice(0, q - 1);
+    if(before.slice(-1) === "/"){
+      if(before.slice(-2) === "//") return;
+      var ws = before.split(/\/{2,}/);
+      speak(decodeWord(ws[ws.length - 1]));
+    } else {
+      speak(MAP[before.slice(before.lastIndexOf("/") + 1)]);
+    }
+  }
+  var testOscs = [], testTimer = null;
+  function stopTest(){
+    testOscs.forEach(function(o){ try{ o.stop(); }catch(e){} });
+    testOscs = [];
+    clearTimeout(testTimer);
+    testBtn.textContent = "Testar som";
+  }
+  function testSound(){
+    if(testOscs.length){ stopTest(); return; }
+    var c = getCtx();
+    if(!c) return;
+    var u = unit(), t = c.currentTime + 0.05;
+    testOscs.push(tone(c, t, u), tone(c, t + 2 * u, 3 * u));
+    testBtn.textContent = "Parar teste";
+    testTimer = setTimeout(stopTest, (5 * u + 0.15) * 1000);
+  }
+
+  [freq, vol].forEach(function(el){ el.addEventListener("change", function(){ beep(".", true); }); });
+  wpm.addEventListener("change", function(){ setWpm(wpm.value); beep(".", true); });
+  wpmnum.addEventListener("input", function(){
+    var n = Number(wpmnum.value);
+    if(n >= 1 && n <= 60){ curWpm = Math.round(n); syncSelect(curWpm); }
+  });
+  wpmnum.addEventListener("change", function(){ setWpm(wpmnum.value); beep(".", true); });
+  testBtn.addEventListener("click", testSound);
+
+  var mode = "dec";
+  var input2 = document.getElementById("entrada2");
+  var visual2 = document.getElementById("visual2");
+  var morse2 = document.getElementById("morse2");
+  var REV = {};
+  Object.keys(MAP).forEach(function(k){ REV[MAP[k]] = k; });
+
+  function encodeText(s){
+    var norm = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+    return norm.split(/\s+/).filter(Boolean).map(function(w){
+      return w.split("").map(function(ch){ return REV[ch]; }).filter(Boolean).join("/");
+    }).filter(Boolean).join("//");
+  }
+  function currentMorse(){ return mode === "enc" ? encodeText(input2.value) : input.value; }
+  function renderEnc(){
+    var m = encodeText(input2.value);
+    visual2.textContent = "";
+    if(!m){
+      var e = document.createElement("span");
+      e.className = "empty";
+      e.textContent = "Os símbolos aparecem aqui.";
+      visual2.appendChild(e);
+    } else {
+      for(var i = 0; i < m.length; i++){
+        var c = m[i], s = document.createElement("span");
+        if(c === ".") s.className = "dot";
+        else if(c === "-") s.className = "dash";
+        else s.className = "sep" + (m[i - 1] === "/" ? " w" : "");
+        visual2.appendChild(s);
+      }
+    }
+    morse2.textContent = m;
+  }
+  function setMode(m){
+    mode = m;
+    stopPlay();
+    ["dec", "enc"].forEach(function(k){
+      document.getElementById("pane-" + k).hidden = (k !== m);
+      document.getElementById("tab-" + k).setAttribute("aria-selected", String(k === m));
+    });
+    document.getElementById("out-dec").hidden = (m !== "dec");
+  }
+  document.getElementById("tab-dec").addEventListener("click", function(){ setMode("dec"); });
+  document.getElementById("tab-enc").addEventListener("click", function(){ setMode("enc"); renderEnc(); });
+  input2.addEventListener("input", renderEnc);
+  document.getElementById("copiar").addEventListener("click", function(ev){
+    var b = ev.currentTarget, m = encodeText(input2.value);
+    if(!m) return;
+    var fim = function(t){ b.textContent = t; setTimeout(function(){ b.textContent = "Copiar Morse"; }, 1500); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(m).then(function(){ fim("Copiado"); }, function(){ fim("Não foi possível copiar"); });
+    } else { fim("Não foi possível copiar"); }
+  });
+  document.getElementById("usar").addEventListener("click", function(){
+    var m = encodeText(input2.value);
+    if(!m) return;
+    input.value = m;
+    setMode("dec");
+    render();
+  });
+  renderEnc();
+  sw.addEventListener("click", function(){
+    soundOn = !soundOn;
+    sw.setAttribute("aria-checked", String(soundOn));
+    swv.textContent = soundOn ? "Ativado" : "Desativado";
+    if(soundOn) getCtx();
+  });
+  var swVoz = document.getElementById("swvoz");
+  var swVozV = document.getElementById("swvozv");
+  swVoz.addEventListener("click", function(){
+    voiceOn = !voiceOn;
+    swVoz.setAttribute("aria-checked", String(voiceOn));
+    swVozV.textContent = voiceOn ? "Ativada" : "Desativada";
+    if(!voiceOn && window.speechSynthesis) window.speechSynthesis.cancel();
+  });
+  document.getElementById("repetir").addEventListener("click", function(){
+    speak(mode === "enc" ? input2.value.trim() : texto.textContent, true);
+  });
+  playBtn.addEventListener("click", playMessage);
+
+  input.addEventListener("input", function(){
+    var antes = prev;
+    clean();
+    var v = input.value, p = input.selectionStart;
+    if(v.length === antes.length + 1 && p > 0) react(v, p);
+  });
+  input.addEventListener("paste", function(){ setTimeout(clean, 0); });
+
+  document.querySelector(".keys").addEventListener("mousedown", function(ev){ ev.preventDefault(); });
+
+  document.querySelector(".keys").addEventListener("click", function(ev){
+    var b = ev.target.closest("button");
+    if(!b) return;
+    if(b.dataset.k){
+      var a = input.selectionStart, z = input.selectionEnd;
+      input.setRangeText(b.dataset.k, a, z, "end");
+      var vv = input.value, qq = input.selectionStart, nn = b.dataset.k.length;
+      for(var k = 1; k <= nn; k++) react(vv, qq - nn + k);
+    } else if(b.dataset.act === "back"){
+      var p = input.selectionStart;
+      if(input.selectionEnd > p) input.setRangeText("", p, input.selectionEnd, "end");
+      else if(p > 0) input.setRangeText("", p - 1, p, "end");
+    } else if(b.dataset.nav){
+      moveCaret(Number(b.dataset.nav));
+    } else if(b.dataset.act === "clear"){
+      input.value = "";
+    }
+    render();
+  });
+
+  var curLang = "pt-BR", idiomaSalvo = false;
+  var langSel = document.getElementById("lang");
+  var langNota = document.getElementById("langnota");
+  var LANGS = Array.prototype.map.call(langSel.options, function(o){ return o.value; });
+  var TZ = {};
+  function reg(c, lista){ lista.split(" ").forEach(function(z){ TZ[z] = c; }); }
+  reg("pt-BR", "America/Sao_Paulo America/Bahia America/Fortaleza America/Recife America/Maceio America/Belem America/Manaus America/Cuiaba America/Campo_Grande America/Porto_Velho America/Boa_Vista America/Rio_Branco America/Araguaina America/Santarem America/Noronha America/Eirunepe");
+  reg("pt-PT", "Europe/Lisbon Atlantic/Azores Atlantic/Madeira");
+  reg("es-ES", "Europe/Madrid Atlantic/Canary Africa/Ceuta");
+  reg("es-MX", "America/Mexico_City America/Cancun America/Merida America/Monterrey America/Tijuana America/Chihuahua America/Hermosillo America/Mazatlan America/Bogota America/Lima America/Santiago America/Caracas America/La_Paz America/Montevideo America/Asuncion America/Guayaquil America/Panama America/Costa_Rica America/Guatemala America/El_Salvador America/Tegucigalpa America/Managua America/Havana America/Santo_Domingo America/Buenos_Aires");
+  reg("fr-FR", "Europe/Paris");
+  reg("de-DE", "Europe/Berlin Europe/Vienna");
+  reg("it-IT", "Europe/Rome");
+  reg("en-GB", "Europe/London Europe/Dublin");
+  reg("en-US", "America/New_York America/Chicago America/Denver America/Los_Angeles America/Phoenix America/Anchorage America/Detroit America/Boise America/Toronto America/Vancouver America/Edmonton America/Winnipeg America/Halifax Pacific/Honolulu");
+  reg("ja-JP", "Asia/Tokyo");
+  reg("zh-CN", "Asia/Shanghai Asia/Chongqing Asia/Harbin Asia/Urumqi");
+  reg("hi-IN", "Asia/Kolkata Asia/Calcutta");
+  reg("ru-RU", "Europe/Moscow Europe/Kaliningrad Europe/Samara Europe/Volgograd");
+  reg("ar-SA", "Asia/Riyadh Asia/Dubai Africa/Cairo");
+  reg("ko-KR", "Asia/Seoul");
+
+  function zonaParaLingua(tz){
+    if(TZ[tz]) return TZ[tz];
+    if(tz.indexOf("America/Argentina/") === 0) return "es-MX";
+    if(tz.indexOf("America/Indiana/") === 0 || tz.indexOf("America/Kentucky/") === 0 || tz.indexOf("US/") === 0) return "en-US";
+    if(tz.indexOf("Australia/") === 0) return "en-GB";
+    return "";
+  }
+  function detectar(){
+    var tz = "", i, j;
+    try{ tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; }catch(e){}
+    var c = zonaParaLingua(tz);
+    if(c) return {lang: c, tz: tz, origem: "fuso"};
+    var ls = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || "pt-BR"];
+    for(i = 0; i < ls.length; i++){
+      var l = String(ls[i]).replace("_", "-").toLowerCase();
+      for(j = 0; j < LANGS.length; j++){ if(LANGS[j].toLowerCase() === l) return {lang: LANGS[j], tz: tz, origem: "aparelho"}; }
+      for(j = 0; j < LANGS.length; j++){ if(LANGS[j].slice(0, 2).toLowerCase() === l.slice(0, 2)) return {lang: LANGS[j], tz: tz, origem: "aparelho"}; }
+    }
+    return {lang: "pt-BR", tz: tz, origem: "padrão"};
+  }
+  function nomeLang(c){
+    var o = langSel.querySelector('option[value="' + c + '"]');
+    return o ? o.textContent : c;
+  }
+  function notaDeteccao(d){
+    var base = d.origem === "fuso" ? "Fuso horário detectado: " + d.tz
+      : d.origem === "aparelho" ? "Idioma do aparelho: " + (navigator.language || "")
+      : "Não foi possível detectar o local";
+    return base + " → voz em " + nomeLang(d.lang) + ".";
+  }
+  function setLang(c, hash){
+    if(LANGS.indexOf(c) < 0) return false;
+    curLang = c;
+    langSel.value = c;
+    if(hash && location.hash.slice(1).toLowerCase() !== c.toLowerCase()){
+      try{ location.hash = c.toLowerCase(); }catch(e){}
+    }
+    return true;
+  }
+  function langDeHash(){
+    var h = location.hash.slice(1).toLowerCase(), i;
+    if(!h) return "";
+    for(i = 0; i < LANGS.length; i++){ if(LANGS[i].toLowerCase() === h) return LANGS[i]; }
+    for(i = 0; i < LANGS.length; i++){ if(LANGS[i].slice(0, 2).toLowerCase() === h) return LANGS[i]; }
+    return "";
+  }
+  function iniciarIdioma(){
+    var h = langDeHash();
+    if(h){ setLang(h, false); langNota.textContent = "Idioma da voz: " + nomeLang(h) + "."; return; }
+    if(idiomaSalvo) return;
+    var d = detectar();
+    setLang(d.lang, false);
+    langNota.textContent = notaDeteccao(d);
+    try{
+      if(navigator.permissions && navigator.permissions.query){
+        navigator.permissions.query({name: "geolocation"}).then(function(r){
+          if(r.state === "granted") detectarGps();
+        }, function(){});
+      }
+    }catch(e){}
+  }
+  var LOCAIS = [];
+  function locs(l, txt){
+    txt.split(";").forEach(function(r){
+      var p = r.split(",");
+      LOCAIS.push({n: p[0], r: p[1], la: Number(p[2]), lo: Number(p[3]), l: l});
+    });
+  }
+  locs("pt-BR", "Rio Branco,AC,-9.97,-67.81;Maceió,AL,-9.67,-35.74;Arapiraca,AL,-9.75,-36.66;Macapá,AP,0.03,-51.07;Manaus,AM,-3.12,-60.02;Salvador,BA,-12.97,-38.51;Feira de Santana,BA,-12.27,-38.97;Fortaleza,CE,-3.73,-38.53;Juazeiro do Norte,CE,-7.21,-39.32;Brasília,DF,-15.79,-47.88;Vitória,ES,-20.32,-40.34;Goiânia,GO,-16.68,-49.25;São Luís,MA,-2.53,-44.30;Imperatriz,MA,-5.52,-47.48;Cuiabá,MT,-15.60,-56.10;Campo Grande,MS,-20.47,-54.62;Belo Horizonte,MG,-19.92,-43.94;Uberlândia,MG,-18.92,-48.28;Belém,PA,-1.46,-48.50;Santarém,PA,-2.44,-54.71;João Pessoa,PB,-7.12,-34.86;Campina Grande,PB,-7.23,-35.88;Curitiba,PR,-25.43,-49.27;Londrina,PR,-23.31,-51.16;Foz do Iguaçu,PR,-25.55,-54.58;Recife,PE,-8.05,-34.88;Caruaru,PE,-8.28,-35.98;Petrolina,PE,-9.39,-40.50;Teresina,PI,-5.09,-42.80;Rio de Janeiro,RJ,-22.91,-43.17;Natal,RN,-5.79,-35.21;Porto Alegre,RS,-30.03,-51.23;Porto Velho,RO,-8.76,-63.90;Boa Vista,RR,2.82,-60.67;Florianópolis,SC,-27.60,-48.55;Joinville,SC,-26.30,-48.85;São Paulo,SP,-23.55,-46.63;Campinas,SP,-22.91,-47.06;Ribeirão Preto,SP,-21.18,-47.81;Aracaju,SE,-10.91,-37.07;Palmas,TO,-10.18,-48.33");
+  locs("pt-PT", "Lisboa,Portugal,38.72,-9.14;Porto,Portugal,41.15,-8.61;Faro,Portugal,37.02,-7.93");
+  locs("es-ES", "Madri,Espanha,40.42,-3.70;Barcelona,Espanha,41.39,2.17;Sevilha,Espanha,37.39,-5.98;Valência,Espanha,39.47,-0.38;Bilbau,Espanha,43.26,-2.93;Vigo,Espanha,42.24,-8.72");
+  locs("es-MX", "Cidade do México,México,19.43,-99.13;Guadalajara,México,20.67,-103.35;Monterrey,México,25.67,-100.31;Bogotá,Colômbia,4.71,-74.07;Lima,Peru,-12.05,-77.04;Santiago,Chile,-33.45,-70.67;Buenos Aires,Argentina,-34.60,-58.38;Caracas,Venezuela,10.48,-66.90;Quito,Equador,-0.18,-78.47;La Paz,Bolívia,-16.50,-68.15;Montevidéu,Uruguai,-34.90,-56.19;Assunção,Paraguai,-25.26,-57.58;Havana,Cuba,23.11,-82.37;Cidade do Panamá,Panamá,8.98,-79.52");
+  locs("en-US", "Nova York,EUA,40.71,-74.01;Los Angeles,EUA,34.05,-118.24;Chicago,EUA,41.88,-87.63;Houston,EUA,29.76,-95.37;Miami,EUA,25.76,-80.19;Denver,EUA,39.74,-104.99;Seattle,EUA,47.61,-122.33;Toronto,Canadá,43.65,-79.38;Vancouver,Canadá,49.28,-123.12");
+  locs("en-GB", "Londres,Reino Unido,51.51,-0.13;Edimburgo,Reino Unido,55.95,-3.19;Dublin,Irlanda,53.35,-6.26;Sydney,Austrália,-33.87,151.21;Melbourne,Austrália,-37.81,144.96");
+  locs("fr-FR", "Paris,França,48.86,2.35;Lyon,França,45.76,4.84;Marselha,França,43.30,5.37;Montreal,Canadá,45.50,-73.57");
+  locs("de-DE", "Berlim,Alemanha,52.52,13.40;Munique,Alemanha,48.14,11.58;Hamburgo,Alemanha,53.55,9.99;Viena,Áustria,48.21,16.37");
+  locs("it-IT", "Roma,Itália,41.90,12.50;Milão,Itália,45.46,9.19;Nápoles,Itália,40.85,14.27");
+  locs("ja-JP", "Tóquio,Japão,35.68,139.69;Osaka,Japão,34.69,135.50");
+  locs("zh-CN", "Pequim,China,39.90,116.41;Xangai,China,31.23,121.47;Cantão,China,23.13,113.26");
+  locs("hi-IN", "Nova Délhi,Índia,28.61,77.21;Mumbai,Índia,19.08,72.88;Calcutá,Índia,22.57,88.36;Bangalore,Índia,12.97,77.59");
+  locs("ru-RU", "Moscou,Rússia,55.76,37.62;São Petersburgo,Rússia,59.93,30.34");
+  locs("ar-SA", "Riad,Arábia Saudita,24.71,46.68;Dubai,Emirados Árabes,25.20,55.27;Cairo,Egito,30.04,31.24");
+  locs("ko-KR", "Seul,Coreia do Sul,37.57,126.98;Busan,Coreia do Sul,35.18,129.08");
+
+  function distKm(a, b, c, d){
+    var rad = Math.PI / 180, dLa = (c - a) * rad, dLo = (d - b) * rad;
+    var h = Math.sin(dLa / 2) * Math.sin(dLa / 2) + Math.cos(a * rad) * Math.cos(c * rad) * Math.sin(dLo / 2) * Math.sin(dLo / 2);
+    return 2 * 6371 * Math.asin(Math.sqrt(h));
+  }
+  function maisProximo(la, lo){
+    var best = null, bd = 1e9;
+    LOCAIS.forEach(function(p){
+      var d = distKm(la, lo, p.la, p.lo);
+      if(d < bd){ bd = d; best = p; }
+    });
+    return (best && bd <= 1200) ? {p: best, km: Math.round(bd)} : null;
+  }
+  function detectarGps(){
+    var cair = function(motivo){
+      var d = detectar();
+      setLang(d.lang, true);
+      langNota.textContent = motivo + " " + notaDeteccao(d);
+    };
+    if(!navigator.geolocation){ cair("Este navegador não oferece localização."); return; }
+    langNota.textContent = "Pedindo permissão de localização...";
+    navigator.geolocation.getCurrentPosition(function(pos){
+      var m = maisProximo(pos.coords.latitude, pos.coords.longitude);
+      if(!m){ cair("Seu local está fora da lista de referência."); return; }
+      setLang(m.p.l, true);
+      langNota.textContent = "Localização: perto de " + m.p.n + ", " + m.p.r + " (cidade de referência a " + m.km + " km) → voz em " + nomeLang(m.p.l) + ".";
+    }, function(err){
+      cair(err && err.code === 1 ? "Permissão de localização negada." : "Não foi possível obter a localização.");
+    }, {enableHighAccuracy: false, timeout: 10000, maximumAge: 600000});
+  }
+  function pintarSom(){
+    sw.setAttribute("aria-checked", String(soundOn));
+    swv.textContent = soundOn ? "Ativado" : "Desativado";
+  }
+  function pintarVoz(){
+    swVoz.setAttribute("aria-checked", String(voiceOn));
+    swVozV.textContent = voiceOn ? "Ativada" : "Desativada";
+  }
+
+  langSel.addEventListener("change", function(){
+    setLang(langSel.value, true);
+    langNota.textContent = "Idioma da voz: " + nomeLang(curLang) + ".";
+  });
+  document.getElementById("detectar").addEventListener("click", detectarGps);
+  window.addEventListener("hashchange", function(){
+    var c = langDeHash();
+    if(c) setLang(c, false);
+  });
+  document.getElementById("restaurar").addEventListener("click", function(){
+    setWpm(12);
+    freq.value = 615; freqnum.value = 615;
+    vol.value = 30; volv.textContent = "30%";
+    soundOn = true; voiceOn = true;
+    pintarSom(); pintarVoz();
+    var d = detectar();
+    setLang(d.lang, true);
+    langNota.textContent = notaDeteccao(d);
+  });
+
+  var STORE = "morse-estado-v1";
+  function salvar(){
+    try{
+      localStorage.setItem(STORE, JSON.stringify({
+        wpm: curWpm, freq: Number(freq.value), vol: Number(vol.value),
+        som: soundOn, voz: voiceOn, modo: mode, dec: input.value, enc: input2.value, lang: curLang
+      }));
+    }catch(e){}
+  }
+  function carregar(){
+    var s = null;
+    try{ s = JSON.parse(localStorage.getItem(STORE) || "null"); }catch(e){}
+    if(!s || typeof s !== "object") return;
+    if(typeof s.wpm === "number") setWpm(s.wpm);
+    if(typeof s.lang === "string" && setLang(s.lang, false)){
+      idiomaSalvo = true;
+      langNota.textContent = "Idioma da voz: " + nomeLang(curLang) + ".";
+    }
+    if(typeof s.freq === "number"){
+      var f = Math.min(1500, Math.max(200, Math.round(s.freq)));
+      freq.value = f; freqnum.value = f;
+    }
+    if(typeof s.vol === "number"){
+      var vl = Math.min(100, Math.max(0, Math.round(s.vol)));
+      vol.value = vl; volv.textContent = vl + "%";
+    }
+    if(s.som === false){
+      soundOn = false;
+      sw.setAttribute("aria-checked", "false");
+      swv.textContent = "Desativado";
+    }
+    if(s.voz === false){
+      voiceOn = false;
+      swVoz.setAttribute("aria-checked", "false");
+      swVozV.textContent = "Desativada";
+    }
+    if(typeof s.dec === "string") input.value = s.dec.replace(/[^.\-\/]/g, "");
+    if(typeof s.enc === "string") input2.value = s.enc.slice(0, 5000);
+    setMode(s.modo === "enc" ? "enc" : "dec");
+    renderEnc();
+  }
+  ["input", "change", "click"].forEach(function(t){ document.addEventListener(t, salvar); });
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "hidden") salvar();
+  });
+  window.addEventListener("pagehide", salvar);
+
+  carregar();
+  iniciarIdioma();
+  render();
+})();
+</script>
+</body>
+</html>
