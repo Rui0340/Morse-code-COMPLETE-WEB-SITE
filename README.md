@@ -1,5 +1,5 @@
 # Morse-code-COMPLETE-WEB-SITE
-Site: https://rui0340.github.io/Morse-code-COMPLETE-WEB-SITE/
+Site: https://rui0340.github.io/Morse-code-COMPLETE-WEB-SITE/Morse_Code.html
 # Código Morse
 
 Site para **codificar e decodificar código Morse**, com som, voz e ajustes de velocidade, frequência e volume. Funciona em celular, tablet e computador, com tema cinza escuro. E um detector de dispositivo
