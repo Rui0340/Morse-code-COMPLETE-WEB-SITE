@@ -6,7 +6,7 @@ Site para **codificar e decodificar código Morse**, com som, voz e ajustes de v
 É uma página única (`HTML`, `CSS` e `JavaScript` no mesmo arquivo), **sem dependências e sem etapa de build**.
 
 ## Recursos
-
+Gui Adapter, Carregamento e Detector de dispositivo.
 ### Decodificar
 
 - A caixa de texto só aceita quatro entradas: `.` (ponto), `-` (traço), `/` (separa letras) e `//` (separa palavras). Qualquer outro caractere é removido na hora, inclusive quando colado.
