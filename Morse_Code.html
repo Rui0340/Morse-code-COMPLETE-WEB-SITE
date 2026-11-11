@@ -17,7 +17,7 @@
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--text);font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;min-height:100vh}
-main{max-width:var(--main-w,46rem);margin:0 auto;padding:clamp(1.25rem,5vw,3rem) clamp(1rem,4vw,2rem)}
+main{display:flex;flex-direction:column;max-width:var(--main-w,46rem);margin:0 auto;padding:clamp(1.25rem,5vw,3rem) clamp(1rem,4vw,2rem)}
 h1{font-size:clamp(1.4rem,4.5vw,2rem);font-weight:600;margin:0 0 .4rem;letter-spacing:.02em}
 .hint{color:var(--muted);font-size:.9rem;line-height:1.6;margin:0 0 1.5rem}
 textarea{
@@ -88,6 +88,24 @@ html[data-motion="reduce"] *{transition:none !important}
 .info{margin:0 0 1.5rem;padding-left:1.2rem;line-height:1.7}
 .info li{margin-bottom:.4rem}
 .info b{color:var(--accent);font-weight:600}
+.legend{order:3}
+.settings{order:2}
+#out-dec{order:1;margin-bottom:1.5rem}
+.ativ-tipos{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
+.ativ-tipos button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.ativ-enun{margin:0 0 .8rem;line-height:1.6}
+#ativ-resp{flex:1 1 10rem;min-width:0;min-height:var(--btn-h,3rem);background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:.5rem;padding:.7rem .8rem;font:inherit;font-size:1.2rem;letter-spacing:.1em;line-height:1.4;resize:vertical}
+#ativ-resp:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ativ-fb{min-height:1.6rem;margin:.6rem 0 1rem}
+html[data-device="phone"] .tabs{gap:.25rem}
+html[data-device="phone"] .tabs button{font-size:.78rem}
+.chips{grid-template-columns:repeat(auto-fill,minmax(3rem,1fr));margin:.6rem 0}
+.chip{flex:none;min-height:2.6rem;padding:0;font-size:1.1rem}
+.chip[aria-pressed="true"]{background:var(--accent);color:#2b2e32;border-color:var(--accent);font-weight:600}
+details.saber{background:var(--panel);border:1px solid var(--line);border-radius:.6rem;padding:.75rem 1rem;margin-bottom:1rem}
+details.saber summary{cursor:pointer}
+.ativ-texto{margin:0 0 .8rem;padding:.8rem 1rem;background:var(--panel);border:1px solid var(--line);border-radius:.6rem;font-size:1.1rem;line-height:1.6;letter-spacing:.05em;max-height:14rem;overflow:auto}
+#ativ-visual{max-height:16rem;overflow:auto}
 .caret{width:2px;height:2.2rem;border-radius:1px;background:var(--text);margin:0 .1rem}
 .btns{display:flex;flex-wrap:wrap;gap:.5rem}
 .btns button{flex:1 1 9rem;font-size:1rem}
@@ -112,6 +130,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     <button type="button" role="tab" id="tab-dec" aria-selected="true" aria-controls="pane-dec">Decodificar</button>
     <button type="button" role="tab" id="tab-enc" aria-selected="false" aria-controls="pane-enc">Codificar</button>
     <button type="button" role="tab" id="tab-apr" aria-selected="false" aria-controls="pane-apr">Aprender</button>
+    <button type="button" role="tab" id="tab-ati" aria-selected="false" aria-controls="pane-ati">Atividades</button>
   </div>
 
   <div id="pane-dec">
@@ -177,6 +196,59 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       <li>A velocidade em <b>WPM</b> usa a palavra PARIS (50 unidades de tempo) como referência. A 12 WPM, um ponto dura 100 ms e um traço 300 ms.</li>
       <li>Hoje o padrão é mantido pela ITU, na recomendação ITU-R M.1677-1.</li>
     </ul>
+  </div>
+
+  <div id="pane-ati" hidden>
+    <p class="hint">Escolha uma tarefa e treine. Seus acertos ficam salvos neste aparelho.</p>
+    <div class="ativ-tipos" id="ativ-tipos">
+      <button type="button" data-tipo="ouvir" aria-pressed="true">Ouvir e acertar</button>
+      <button type="button" data-tipo="decifrar" aria-pressed="false">Decifrar a palavra</button>
+      <button type="button" data-tipo="codificar" aria-pressed="false">Codificar a palavra</button>
+    </div>
+    <div class="row" id="ativ-nivel-row" style="margin-bottom:1rem">
+      <label for="ativ-nivel">Nível</label>
+      <select id="ativ-nivel"></select>
+      <span id="ativ-nivel-info"></span>
+    </div>
+    <div class="row" id="ativ-vis-row" style="margin-bottom:1rem">
+      <label for="ativ-vis">Mostrar o código</label>
+      <button type="button" id="ativ-vis" class="switch" role="switch" aria-checked="true" aria-label="Mostrar o código"></button>
+      <span id="ativ-vis-v">Visível</span>
+    </div>
+    <details class="saber" id="saber">
+      <summary>Caracteres que eu já sei (<span id="saber-n">0</span>)</summary>
+      <p class="hint" style="margin:.6rem 0 0">Marque os que você já conhece. As atividades só usam esses.</p>
+      <div class="tabela chips" id="saber-grid"></div>
+      <div class="btns" id="saber-presets">
+        <button type="button" data-preset="ini">Iniciantes</button>
+        <button type="button" data-preset="letras">Todas as letras</button>
+        <button type="button" data-preset="tudo">Letras e números</button>
+        <button type="button" data-preset="nada">Limpar</button>
+      </div>
+    </details>
+    <p class="ativ-enun" id="ativ-enun"></p>
+    <p class="ativ-texto" id="ativ-texto" hidden></p>
+    <div class="view" id="ativ-visual" hidden></div>
+    <div class="row">
+      <textarea id="ativ-resp" rows="2" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Sua resposta"></textarea>
+      <button type="button" id="ativ-ok" style="flex:0 0 auto;padding:0 1.2rem">Responder</button>
+    </div>
+    <div class="keys" id="ativ-keys" hidden style="margin:.25rem 0 .5rem">
+      <button data-nav="-1" aria-label="Letra anterior">&lt;</button>
+      <button data-k="." aria-label="Ponto">.</button>
+      <button data-k="-" aria-label="Traço">-</button>
+      <button data-k="/" aria-label="Barra">/</button>
+      <button data-k="//" aria-label="Barra dupla">//</button>
+      <button data-nav="1" aria-label="Próxima letra">&gt;</button>
+      <button class="small" data-act="back" aria-label="Apagar último">apagar</button>
+      <button class="small" data-act="clear" aria-label="Limpar tudo">limpar</button>
+    </div>
+    <p class="ativ-fb" id="ativ-fb" aria-live="polite"></p>
+    <div class="btns">
+      <button type="button" id="ativ-ouvir">Ouvir de novo</button>
+      <button type="button" id="ativ-prox">Próxima</button>
+    </div>
+    <p class="hint" id="ativ-placar" style="margin:1rem 0 2rem"></p>
   </div>
 
   <div class="settings">
@@ -250,11 +322,11 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
   </div>
 
   <div id="out-dec">
+  <h2>Tradução</h2>
+  <p class="decoded" id="texto" aria-live="polite" style="margin-bottom:1.25rem"></p>
   <h2>O que você escreveu</h2>
   <div class="view" id="visual" aria-live="polite"></div>
 
-  <h2>Tradução</h2>
-  <p class="decoded" id="texto" aria-live="polite"></p>
   </div>
 
   <p class="legend">
@@ -650,7 +722,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       return w.split("").map(function(ch){ return REV[ch]; }).filter(Boolean).join("/");
     }).filter(Boolean).join("//");
   }
-  function currentMorse(){ return mode === "enc" ? encodeText(input2.value) : (mode === "apr" ? "" : input.value); }
+  function currentMorse(){ return mode === "enc" ? encodeText(input2.value) : ((mode === "apr" || mode === "ati") ? "" : input.value); }
   function renderEnc(){
     var m = encodeText(input2.value);
     visual2.textContent = "";
@@ -673,7 +745,8 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
   function setMode(m){
     mode = m;
     stopPlay();
-    ["dec", "enc", "apr"].forEach(function(k){
+    pararAtiv();
+    ["dec", "enc", "apr", "ati"].forEach(function(k){
       document.getElementById("pane-" + k).hidden = (k !== m);
       document.getElementById("tab-" + k).setAttribute("aria-selected", String(k === m));
     });
@@ -684,18 +757,40 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
   input2.addEventListener("input", renderEnc);
   document.getElementById("tab-apr").addEventListener("click", function(){ setMode("apr"); });
 
+  var audAtiv = [], timerAtiv = null, tocandoAtiv = false;
+  function atualizarBotaoOuvir(){
+    var b = document.getElementById("ativ-ouvir");
+    if(b) b.textContent = tocandoAtiv ? "Parar" : "Ouvir de novo";
+  }
+  function pararAtiv(){
+    audAtiv.forEach(function(o){ try{ o.stop(); }catch(e){} });
+    audAtiv = [];
+    clearTimeout(timerAtiv);
+    tocandoAtiv = false;
+    atualizarBotaoOuvir();
+  }
   function tocarMorse(m){
     var c = getCtx();
     if(!c) return;
-    var u = unit(), t = c.currentTime + 0.05;
-    for(var i = 0; i < m.length; i++){
-      var ch = m[i];
-      if(ch === "." || ch === "-"){
-        var d = (ch === "." ? 1 : 3) * u;
-        tone(c, t, d);
-        t += d + u;
-      } else if(ch === "/"){ t += 2 * u; }
+    pararAtiv();
+    var u = unit(), t = c.currentTime + 0.05, i = 0;
+    tocandoAtiv = true;
+    atualizarBotaoOuvir();
+    function passo(){
+      while(i < m.length && t < c.currentTime + 2){
+        var ch = m[i++];
+        if(ch === "." || ch === "-"){
+          var d = (ch === "." ? 1 : 3) * u;
+          audAtiv.push(tone(c, t, d));
+          t += d + u;
+        } else if(ch === "/"){
+          if(m[i] === "/"){ i++; t += 6 * u; } else { t += 2 * u; }
+        }
+      }
+      if(i < m.length) timerAtiv = setTimeout(passo, 500);
+      else timerAtiv = setTimeout(pararAtiv, Math.max(0, t - c.currentTime) * 1000 + 100);
     }
+    passo();
   }
   function celula(rotulo, morse, legenda){
     var b = document.createElement("button");
@@ -720,6 +815,384 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
    ["KN", "Convite a uma estação específica", "-.--."], ["AS", "Aguarde", ".-..."], ["CT", "Início da mensagem", "-.-.-"],
    ["HH", "Erro, repita", "........"], ["CQ", "Chamada geral", "-.-./--.-"], ["SOS", "Socorro", "...---..."]].forEach(function(r){
     pros.appendChild(celula(r[0], r[2], r[1]));
+  });
+
+  var ativ = {tipo: "ouvir", item: null, ok: false, acertos: 0, total: 0, seq: 0, melhor: 0, nivel: 2, visivel: true};
+  var NIVEIS = [
+    {n: "Super fácil", pw: [1, 1], wl: [2, 3], oc: 1},
+    {n: "Pré fácil", pw: [1, 1], wl: [3, 4], oc: 1},
+    {n: "Fácil", pw: [1, 1], wl: [4, 5], oc: 2},
+    {n: "Pré-medium", pw: [2, 2], oc: 3},
+    {n: "Médium", pw: [3, 3], ow: 1},
+    {n: "Super medium", pw: [4, 5], ow: 2},
+    {n: "Pré-Hard", pw: [6, 8], ow: 3},
+    {n: "Hard", pw: [9, 12], ow: 5},
+    {n: "Super Hard", pw: [13, 18], ow: 8},
+    {n: "Quase profissional", pw: [20, 28], ow: 12},
+    {n: "Profissional", pw: [30, 45], ow: 18},
+    {n: "Impossível", pw: [50, 70], ow: 25}
+  ];
+  var PALAVRAS = ["COMUNICAR", "SALVAMENTO", "AVENTURA", "MENSAGEM", "PROFESSOR", "EXPLORAR", "BIBLIOTECA", "TRANSMISSAO", "RADIOAMADOR", "FREQUENCIA", "VELOCIDADE", "NAVEGACAO", "SINALIZACAO", "ALFABETO", "SIM", "NAO", "OI", "ELE", "ELA", "ANO", "DIA", "ASA", "OVO", "REI", "UVA", "SAL", "MEL", "PAO", "TIO", "TIA", "RUA", "MESA", "NOME", "TELA", "ONDA", "SETE", "NOVE", "DOIS", "SOS", "SOL", "MAR", "LUA", "PAZ", "AMOR", "VIDA", "CASA", "BOLA", "GATO", "AGUA", "CAFE", "RADIO", "SINAL", "MORSE", "TEMPO", "FELIZ", "NOITE", "PRAIA", "LIVRO", "CODIGO", "SOCORRO", "TELEGRAFO", "ESTUDAR"];
+  var aResp = document.getElementById("ativ-resp");
+  var aFb = document.getElementById("ativ-fb");
+  var aVis = document.getElementById("ativ-visual");
+  var aEnun = document.getElementById("ativ-enun");
+
+  function desenharSimbolos(el, m){
+    el.textContent = "";
+    for(var i = 0; i < m.length; i++){
+      var s = document.createElement("span"), c = m[i];
+      if(c === ".") s.className = "dot";
+      else if(c === "-") s.className = "dash";
+      else s.className = "sep" + (m[i - 1] === "/" ? " w" : "");
+      el.appendChild(s);
+    }
+  }
+  function bonito(m){ return m.replace(/\./g, "\u2022").replace(/-/g, "\u2013").replace(/\//g, " "); }
+  function placar(){
+    document.getElementById("ativ-placar").textContent = "Acertos: " + ativ.acertos + " de " + ativ.total + " \u00b7 Sequ\u00eancia: " + ativ.seq + " \u00b7 Melhor: " + ativ.melhor;
+  }
+  function sorteia(l){ return l[Math.floor(Math.random() * l.length)]; }
+  function novaTarefa(tocar){
+    clearTimeout(ativ.timer);
+    pararAtiv();
+    ativ.aviso = false;
+    var nv = NIVEIS[ativ.nivel], tipo = ativ.tipo, txt, m;
+    ativ.ok = false;
+    aResp.value = "";
+    aFb.textContent = "";
+    aVis.textContent = "";
+    aVis.hidden = true;
+    aTexto.hidden = true;
+    document.getElementById("ativ-keys").hidden = tipo !== "codificar";
+    document.getElementById("ativ-vis-row").hidden = tipo !== "decifrar";
+    infoNivel();
+    aResp.inputMode = tipo === "codificar" ? "none" : "text";
+    aResp.maxLength = 8000;
+    if(tipo === "ouvir"){
+      if(nv.oc){
+        var pool = listaSaber();
+        if(!pool.length) pool = ["E", "T"];
+        txt = "";
+        for(var q = 0; q < nv.oc; q++) txt += sorteia(pool);
+        aEnun.textContent = "Ouça e digite " + (nv.oc > 1 ? "os " + nv.oc + " caracteres" : "o caractere") + ". Use Ouvir de novo para repetir.";
+        aResp.placeholder = "?";
+      } else {
+        txt = nv.ow === 1 ? escolherPalavra(3, 5) : textoComSentido(nv.ow, nv.ow + Math.max(1, Math.round(nv.ow * 0.2)));
+        aEnun.textContent = "Ouça e digite " + (nv.ow > 1 ? "as " + nv.ow + " palavras" : "a palavra") + ". Use Ouvir de novo para repetir.";
+        aResp.placeholder = "texto";
+      }
+      ativ.item = {resp: txt, morse: encodeText(txt), mostrar: txt};
+      if(tocar) tocarAtiv();
+    } else if(tipo === "decifrar"){
+      txt = gerarTexto(nv.pw, nv.wl);
+      m = encodeText(txt);
+      ativ.item = {resp: txt, morse: m, mostrar: txt};
+      aEnun.textContent = "Decifre o código e digite " + (nv.pw[1] > 1 ? "o texto" : "a palavra") + (ativ.visivel ? ". Você também pode ouvi-lo." : ". O código está oculto: ouça.");
+      if(ativ.visivel){ aVis.hidden = false; desenharSimbolos(aVis, m); }
+      else if(tocar){ tocarAtiv(); }
+      aResp.placeholder = "texto";
+    } else {
+      txt = gerarTexto(nv.pw, nv.wl);
+      m = encodeText(txt);
+      ativ.item = {resp: m, morse: m, mostrar: txt};
+      aEnun.textContent = "Escreva em Morse " + (nv.pw[1] > 1 ? "o texto abaixo" : "a palavra abaixo") + ", usando . - e / entre as letras e // entre as palavras.";
+      aTexto.textContent = txt;
+      aTexto.hidden = false;
+      aVis.hidden = false;
+      aResp.placeholder = ".- / -...";
+    }
+    if(ativ.aviso) aEnun.textContent += " Aviso: este texto usa caracteres que você ainda não marcou no menu.";
+  }
+  function responder(){
+    if(!ativ.item) return;
+    if(ativ.ok){ novaTarefa(true); return; }
+    var r = aResp.value.trim();
+    if(!r) return;
+    var certo;
+    if(ativ.tipo === "codificar") certo = r.replace(/[^.\-\/]/g, "").replace(/^\/+|\/+$/g, "") === ativ.item.resp;
+    else certo = limparTexto(r) === ativ.item.resp;
+    ativ.ok = true;
+    ativ.total++;
+    if(certo){ ativ.acertos++; ativ.seq++; ativ.melhor = Math.max(ativ.melhor, ativ.seq); }
+    else ativ.seq = 0;
+    aFb.style.color = certo ? "var(--accent)" : "#e08a80";
+    aFb.textContent = certo ? "Correto!" : "N\u00e3o foi dessa vez. Resposta: " + (ativ.tipo === "codificar" ? bonito(ativ.item.morse) : ativ.item.mostrar) + (ativ.tipo === "ouvir" ? " (" + bonito(ativ.item.morse) + ")" : "");
+    placar();
+    salvar();
+    if(certo) ativ.timer = setTimeout(function(){ if(ativ.ok && mode === "ati") novaTarefa(true); }, 1200);
+  }
+
+  document.getElementById("ativ-tipos").addEventListener("click", function(ev){
+    var b = ev.target.closest("button");
+    if(!b) return;
+    ativ.tipo = b.dataset.tipo;
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function(x){ x.setAttribute("aria-pressed", String(x === b)); });
+    novaTarefa(true);
+  });
+  document.getElementById("ativ-ok").addEventListener("click", responder);
+  document.getElementById("ativ-prox").addEventListener("click", function(){ novaTarefa(true); });
+  function tocarAtiv(){
+    if(!ativ.item) return;
+    if(tocandoAtiv){ pararAtiv(); return; }
+    tocarMorse(ativ.item.morse);
+  }
+  var aNivel = document.getElementById("ativ-nivel");
+  NIVEIS.forEach(function(n, i){
+    var o = document.createElement("option");
+    o.value = String(i);
+    o.textContent = n.n;
+    aNivel.appendChild(o);
+  });
+  function infoNivel(){
+    var n = NIVEIS[ativ.nivel], det;
+    aNivel.value = String(ativ.nivel);
+    if(ativ.tipo === "ouvir") det = n.oc ? n.oc + (n.oc > 1 ? " caracteres" : " caractere") : n.ow + (n.ow > 1 ? " palavras" : " palavra");
+    else if(n.pw[1] === 1) det = "1 palavra de " + n.wl[0] + " a " + n.wl[1] + " letras";
+    else det = (n.pw[0] === n.pw[1] ? n.pw[0] : n.pw[0] + " a " + n.pw[1]) + " palavras";
+    document.getElementById("ativ-nivel-info").textContent = det;
+  }
+  aNivel.addEventListener("change", function(){
+    ativ.nivel = Number(aNivel.value) || 0;
+    novaTarefa(true);
+  });
+  infoNivel();
+  document.getElementById("ativ-ouvir").addEventListener("click", tocarAtiv);
+  aResp.addEventListener("keydown", function(ev){ if(ev.key === "Enter"){ ev.preventDefault(); responder(); } });
+  aResp.addEventListener("input", function(){
+    if(ativ.tipo === "codificar"){
+      aResp.value = aResp.value.replace(/[^.\-\/]/g, "");
+      desenharSimbolos(aVis, aResp.value);
+    }
+  });
+  document.getElementById("tab-ati").addEventListener("click", function(){
+    setMode("ati");
+    if(!ativ.item) novaTarefa(false);
+    placar();
+  });
+
+  var CAR = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,?!-:;()'=+@";
+  var known = {};
+  var chips = [];
+  function listaSaber(){ return CAR.split("").filter(function(c){ return known[c]; }); }
+  function pintarSaber(){
+    chips.forEach(function(b){ b.setAttribute("aria-pressed", String(!!known[b.dataset.c])); });
+    document.getElementById("saber-n").textContent = listaSaber().length;
+  }
+  function setKnown(str){
+    known = {};
+    str.split("").forEach(function(c){ if(REV[c]) known[c] = true; });
+    pintarSaber();
+  }
+  function escolherPalavra(lo, hi){
+    lo = lo || 1;
+    hi = hi || 99;
+    var ok = PALAVRAS.filter(function(w){ return w.length >= lo && w.length <= hi && w.split("").every(function(c){ return known[c]; }); });
+    if(ok.length) return sorteia(ok);
+    var l = listaSaber();
+    if(!l.length) l = ["E", "T"];
+    var n = hi < 99 ? lo + Math.floor(Math.random() * (hi - lo + 1)) : 3, w = "";
+    for(var i = 0; i < n; i++) w += sorteia(l);
+    return w;
+  }
+  var GRUPOS = [];
+  [
+    "OI TUDO BEM", "SOCORRO ESTOU AQUI", "COMO VAI VOCE", "BOM DIA AMIGO", "VAMOS JOGAR AGORA", "A AVENTURA COMECA", "NOVA MISSAO DISPONIVEL", "FIM DE JOGO",
+    "BOA NOITE", "MUITO OBRIGADO", "ATE LOGO", "FELIZ ANIVERSARIO", "BOM TRABALHO", "BOA SORTE", "BOM JOGO", "NOVO JOGO", "FASE COMPLETA", "MISSAO CUMPRIDA", "VOCE VENCEU",
+    "O TESOURO ESTA AQUI", "BOA SORTE NA SUA AVENTURA", "O HEROI ACORDA NA FLORESTA", "A FASE SEGUINTE ESTA LIBERADA", "ESTE MAPA LEVA AO TESOURO",
+    "PEGUE A ESPADA E O ESCUDO", "O CHEFE FINAL ESTA LOGO ALI", "PRECISO DE UMA POCAO DE VIDA", "O CASTELO FICA ALEM DA PONTE", "VOCE ENCONTROU UM BAU DO TESOURO",
+    "NAO SE ESQUECA DE SALVAR O JOGO", "SALVE O REINO ANTES DO AMANHECER", "O SOL NASCE NO LESTE", "A LUA BRILHA NO CEU", "EU GOSTO DE ESTUDAR MORSE", "O MAR ESTA CALMO HOJE",
+    "A PRATICA LEVA A PERFEICAO", "UM SINAL CURTO E UM SINAL LONGO", "CADA LETRA TEM O SEU RITMO", "O RADIO ESTA LIGADO NA FREQUENCIA CERTA", "O NAVIO ENVIOU UM PEDIDO DE SOCORRO",
+    "TODO DIA UM POUCO DE TREINO FAZ A DIFERENCA", "O SEGREDO PARA APRENDER MORSE E OUVIR E NAO CONTAR"
+  ].forEach(function(f){ GRUPOS.push([f]); });
+  GRUPOS.push([
+    "O CODIGO MORSE USA PONTOS E TRACOS PARA REPRESENTAR LETRAS E NUMEROS",
+    "ELE FOI CRIADO NA DECADA DE 1830 POR SAMUEL MORSE E ALFRED VAIL PARA USO NO TELEGRAFO",
+    "A PRIMEIRA MENSAGEM PUBLICA FOI ENVIADA EM 1844 ENTRE WASHINGTON E BALTIMORE",
+    "DEPOIS O CODIGO FOI SIMPLIFICADO NA EUROPA E VIROU O MORSE INTERNACIONAL",
+    "O SINAL DE SOCORRO SOS FOI ADOTADO EM 1906 PORQUE E FACIL DE LEMBRAR E DE RECONHECER",
+    "ATE HOJE MUITOS RADIOAMADORES USAM O MORSE PARA CONVERSAR PELO MUNDO",
+    "COM TREINO O OUVIDO APRENDE A RECONHECER CADA LETRA COMO UM PEQUENO RITMO"
+  ]);
+  GRUPOS.push([
+    "NO MINECRAFT O JOGADOR COMECA SOZINHO EM UM MUNDO FEITO DE BLOCOS",
+    "DURANTE O DIA ELE JUNTA MADEIRA PEDRA E COMIDA PARA FAZER FERRAMENTAS",
+    "QUANDO ANOITECE MONSTROS APARECEM E ELE PRECISA DE UM ABRIGO SEGURO",
+    "DEPOIS DE CAVAR AS MINAS ELE ENCONTRA FERRO OURO E DIAMANTES",
+    "COM OBSIDIANA ELE ABRE UM PORTAL PARA O NETHER UM MUNDO DE FOGO E LAVA",
+    "LA DENTRO ELE REUNE ITENS RAROS QUE AJUDAM A ENCONTRAR A FORTALEZA",
+    "NO FIM O JOGADOR PODE ENFRENTAR O DRAGAO DO FIM E CONCLUIR A SUA AVENTURA"
+  ]);
+  GRUPOS.push([
+    "EM HYRULE UM GRANDE REINO CHEIO DE FLORESTAS CASTELOS E TEMPLOS VIVE A PRINCESA ZELDA",
+    "LINK E O JOVEM HEROI QUE CARREGA A CORAGEM E A ESPADA MESTRA",
+    "A TRIFORCE E UM SIMBOLO SAGRADO FORMADO PELAS TRES PARTES DO PODER DA SABEDORIA E DA CORAGEM",
+    "O VILAO GANON QUER ROUBAR ESSE PODER PARA DOMINAR TODO O REINO",
+    "POR ISSO LINK VIAJA POR TEMPLOS RESOLVE ENIGMAS E ENFRENTA INIMIGOS PELO CAMINHO",
+    "NO FINAL ELE ENCONTRA ZELDA E LUTA PARA DEVOLVER A PAZ A HYRULE"
+  ]);
+  GRUPOS.push([
+    "NO MUNDO DE POKEMON PESSOAS E CRIATURAS VIVEM E TRABALHAM JUNTAS",
+    "UM JOVEM TREINADOR RECEBE O SEU PRIMEIRO POKEMON E SAI EM UMA GRANDE VIAGEM",
+    "PELO CAMINHO ELE CAPTURA NOVOS AMIGOS E APRENDE COMO CADA TIPO FUNCIONA",
+    "TAMBEM ENFRENTA OS LIDERES DE GINASIO PARA GANHAR INSIGNIAS",
+    "COM TODAS AS INSIGNIAS ELE PODE DISPUTAR A LIGA POKEMON",
+    "O SONHO DE TODO TREINADOR E SE TORNAR UM GRANDE CAMPEAO"
+  ]);
+  GRUPOS.push([
+    "NO REINO DOS COGUMELOS A PRINCESA PEACH VIVE EM UM CASTELO CHEIO DE FLORES",
+    "O VILAO BOWSER SEMPRE TENTA CAPTURAR A PRINCESA E DOMINAR O REINO",
+    "MARIO E LUIGI SAO IRMAOS ENCANADORES E SEMPRE VAO AO SEU SOCORRO",
+    "COM PULOS BEM CALCULADOS ELES JUNTAM MOEDAS E DERROTAM INIMIGOS",
+    "NO FIM DA FASE ELES ALCANCAM UM CASTELO E ENFRENTAM O GRANDE CHEFE"
+  ]);
+  GRUPOS.push([
+    "GERALT DE RIVIA E UM BRUXO QUE CACA MONSTROS EM TROCA DE MOEDAS",
+    "FOI TREINADO DESDE JOVEM E TEM FORCA E REFLEXOS ACIMA DO NORMAL",
+    "ELE VIAJA COM SEU CAVALO POR VILAS FLORESTAS E CIDADES DO CONTINENTE",
+    "NO CAMINHO ENCONTRA CIRI UMA JOVEM QUE CARREGA UM PODER MUITO RARO",
+    "GERALT FAZ DE TUDO PARA PROTEGER CIRI DOS INIMIGOS QUE QUEREM CAPTURAR ESSE PODER"
+  ]);
+  GRUPOS.push([
+    "EM ELDEN RING O JOGADOR E UM MACULADO QUE RETORNA AS TERRAS INTERMEDIARIAS",
+    "O GRANDE CIRCULO DE ELDEN FOI QUEBRADO E SEUS FRAGMENTOS ESTAO ESPALHADOS",
+    "SEMIDEUSES PODEROSOS GUARDAM CADA FRAGMENTO E DISPUTAM O TRONO",
+    "O MACULADO EXPLORA CASTELOS CAVERNAS E CAMPOS ABERTOS CHEIOS DE PERIGOS",
+    "SEU OBJETIVO E REPARAR O CIRCULO E SE TORNAR O SENHOR DE ELDEN"
+  ]);
+  GRUPOS.push([
+    "NO UNIVERSO DE HALO A HUMANIDADE ESTA EM GUERRA CONTRA UMA ALIANCA ALIENIGENA CHAMADA COVENANT",
+    "MASTER CHIEF E UM SOLDADO SPARTAN COM UMA ARMADURA ESPECIAL",
+    "A IA CORTANA O AJUDA COM INFORMACOES E ESTRATEGIAS EM CADA MISSAO",
+    "JUNTOS ELES DESCOBREM ANEIS GIGANTES CHAMADOS HALO COM UM SEGREDO PERIGOSO",
+    "CADA VITORIA DE CHIEF ABRE CAMINHO PARA PROTEGER A TERRA"
+  ]);
+  GRUPOS.push([
+    "RUNETERRA E O MUNDO DE LEAGUE OF LEGENDS E TEM MUITAS REGIOES DIFERENTES",
+    "DEMACIA E UM REINO QUE VALORIZA A JUSTICA E A ORDEM",
+    "NOXUS E UM IMPERIO FORTE ONDE QUEM TEM FORCA PODE SUBIR NA VIDA",
+    "CADA CAMPEAO NASCEU EM UM LUGAR E CARREGA UMA HISTORIA ANTIGA",
+    "QUANDO ELES SE ENCONTRAM NO CAMPO DE BATALHA AS DISPUTAS ENTRE REGIOES CRIAM GRANDES CONFLITOS"
+  ]);
+  GRUPOS.push([
+    "EM STARDEW VALLEY O JOGADOR HERDA UMA FAZENDA ABANDONADA DO SEU AVO",
+    "ELE DEIXA A VIDA NA CIDADE GRANDE E COMECA UMA NOVA ROTINA NO CAMPO",
+    "COM AJUDA DOS VIZINHOS CULTIVA PLANTAS CRIA ANIMAIS E PESCA NO RIO",
+    "AOS POUCOS A FAZENDA PROSPERA E A VILA VOLTA A TER UM NOVO BRILHO"
+  ]);
+  function conhecida(f){ return f.split("").every(function(c){ return c === " " || known[c]; }); }
+  function desconhecidos(f){
+    var n = 0;
+    f.split("").forEach(function(c){ if(c !== " " && !known[c]) n++; });
+    return n;
+  }
+  function janelas(lo, soConhecidas){
+    var out = [];
+    GRUPOS.forEach(function(g){
+      for(var i = 0; i < g.length; i++){
+        var acc = [], n = 0;
+        for(var j = i; j < g.length; j++){
+          if(soConhecidas && !conhecida(g[j])) break;
+          acc.push(g[j]);
+          n += g[j].split(" ").length;
+          if(n >= lo) break;
+        }
+        if(n >= lo) out.push({t: acc.join(" "), n: n});
+      }
+    });
+    return out;
+  }
+  function textoComSentido(lo, hi){
+    ativ.aviso = false;
+    var a = janelas(lo, true).filter(function(x){ return x.n <= hi; });
+    if(a.length) return sorteia(a).t;
+    var b = janelas(lo, false);
+    var dentro = b.filter(function(x){ return x.n <= hi; });
+    if(dentro.length) b = dentro;
+    if(!b.length) return "BOM JOGO";
+    b.forEach(function(x){ x.u = desconhecidos(x.t); });
+    var min = Math.min.apply(null, b.map(function(x){ return x.u; }));
+    var p = sorteia(b.filter(function(x){ return x.u === min; }));
+    ativ.aviso = min > 0;
+    return p.n > hi ? p.t.split(" ").slice(0, hi).join(" ") : p.t;
+  }
+  function gerarTexto(pw, wl){
+    if(pw[1] === 1) return escolherPalavra(wl[0], wl[1]);
+    return textoComSentido(pw[0], pw[1]);
+  }
+  function limparTexto(t){
+    return t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+  }
+  var aTexto = document.getElementById("ativ-texto");
+  var aVisBtn = document.getElementById("ativ-vis");
+  function pintarVis(){
+    aVisBtn.setAttribute("aria-checked", String(ativ.visivel));
+    document.getElementById("ativ-vis-v").textContent = ativ.visivel ? "Visível" : "Oculto";
+  }
+  aVisBtn.addEventListener("click", function(){
+    ativ.visivel = !ativ.visivel;
+    pintarVis();
+    if(ativ.tipo === "decifrar" && ativ.item){
+      aVis.hidden = !ativ.visivel;
+      if(ativ.visivel) desenharSimbolos(aVis, ativ.item.morse);
+      else aVis.textContent = "";
+    }
+  });
+  pintarVis();
+  var grade = document.getElementById("saber-grid");
+  CAR.split("").forEach(function(c){
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip";
+    b.dataset.c = c;
+    b.textContent = c;
+    b.setAttribute("aria-label", "Caractere " + c);
+    b.addEventListener("click", function(){
+      known[c] = !known[c];
+      pintarSaber();
+      if(ativ.item) novaTarefa(false);
+    });
+    grade.appendChild(b);
+    chips.push(b);
+  });
+  document.getElementById("saber-presets").addEventListener("click", function(ev){
+    var b = ev.target.closest("button");
+    if(!b) return;
+    var p = b.dataset.preset;
+    setKnown(p === "letras" ? CAR.slice(0, 26) : (p === "tudo" ? CAR.slice(0, 36) : (p === "ini" ? "ETAINMSO" : "")));
+    if(ativ.item) novaTarefa(false);
+  });
+  setKnown("ETAINMSO");
+
+  var aKeys = document.getElementById("ativ-keys");
+  function moverEm(el, dir){
+    var v = el.value, j, i;
+    if(dir > 0){
+      j = v.length;
+      for(i = el.selectionEnd + 1; i < v.length; i++){ if(v[i - 1] === "/" && v[i] !== "/"){ j = i; break; } }
+    } else {
+      j = 0;
+      for(i = el.selectionStart - 1; i > 0; i--){ if(v[i - 1] === "/" && v[i] !== "/"){ j = i; break; } }
+    }
+    el.setSelectionRange(j, j);
+  }
+  aKeys.addEventListener("mousedown", function(ev){ ev.preventDefault(); });
+  aKeys.addEventListener("click", function(ev){
+    var b = ev.target.closest("button");
+    if(!b || ativ.ok) return;
+    if(b.dataset.k){
+      aResp.setRangeText(b.dataset.k, aResp.selectionStart, aResp.selectionEnd, "end");
+      if(b.dataset.k.length === 1) beep(b.dataset.k);
+    } else if(b.dataset.nav){
+      moverEm(aResp, Number(b.dataset.nav));
+    } else if(b.dataset.act === "back"){
+      var p = aResp.selectionStart;
+      if(aResp.selectionEnd > p) aResp.setRangeText("", p, aResp.selectionEnd, "end");
+      else if(p > 0) aResp.setRangeText("", p - 1, p, "end");
+    } else if(b.dataset.act === "clear"){
+      aResp.value = "";
+    }
+    desenharSimbolos(aVis, aResp.value);
   });
   document.getElementById("copiar").addEventListener("click", function(ev){
     var b = ev.currentTarget, m = encodeText(input2.value);
@@ -956,7 +1429,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     try{
       localStorage.setItem(STORE, JSON.stringify({
         wpm: curWpm, freq: Number(freq.value), vol: Number(vol.value),
-        som: soundOn, voz: voiceOn, modo: mode, dec: input.value, enc: input2.value, lang: curLang
+        som: soundOn, voz: voiceOn, modo: mode, dec: input.value, enc: input2.value, lang: curLang, ati: {a: ativ.acertos, t: ativ.total, m: ativ.melhor, k: listaSaber().join(""), n: ativ.nivel, v: ativ.visivel}
       }));
     }catch(e){}
   }
@@ -989,7 +1462,15 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     }
     if(typeof s.dec === "string") input.value = s.dec.replace(/[^.\-\/]/g, "");
     if(typeof s.enc === "string") input2.value = s.enc.slice(0, 5000);
-    setMode(s.modo === "enc" || s.modo === "apr" ? s.modo : "dec");
+    if(s.ati && typeof s.ati.k === "string") setKnown(s.ati.k);
+    if(s.ati && typeof s.ati.n === "number" && s.ati.n >= 0 && s.ati.n < NIVEIS.length) ativ.nivel = s.ati.n | 0;
+    if(s.ati && typeof s.ati.v === "boolean"){ ativ.visivel = s.ati.v; pintarVis(); }
+    if(s.ati && typeof s.ati.a === "number"){
+      ativ.acertos = s.ati.a | 0; ativ.total = s.ati.t | 0; ativ.melhor = s.ati.m | 0;
+      placar();
+    }
+    setMode(s.modo === "enc" || s.modo === "apr" || s.modo === "ati" ? s.modo : "dec");
+    if(mode === "ati" && !ativ.item){ novaTarefa(false); placar(); }
     renderEnc();
   }
   ["input", "change", "click"].forEach(function(t){ document.addEventListener(t, salvar); });
