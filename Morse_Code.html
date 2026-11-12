@@ -682,6 +682,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     tone(c, c.currentTime + 0.01, unit() * (ch === "." ? 1 : 3));
   }
   function stopPlay(){
+    limparEfeitos();
     playing.forEach(function(o){ try{ o.stop(); }catch(e){} });
     playing = [];
     clearTimeout(endTimer);
@@ -860,6 +861,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     if(b) b.textContent = tocandoAtiv ? "Parar" : "Ouvir de novo";
   }
   function pararAtiv(){
+    limparEfeitos();
     audAtiv.forEach(function(o){ try{ o.stop(); }catch(e){} });
     audAtiv = [];
     clearTimeout(timerAtiv);
@@ -982,6 +984,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       if(!desafio.rodando) iniciarDesafio();
       tickDesafio();
       tocarAtiv();
+      aResp.focus();
     } else if(tipo === "ouvir"){
       if(nv.oc){
         var pool = listaSaber();
@@ -1085,7 +1088,6 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
   document.getElementById("ativ-ouvir").addEventListener("click", tocarAtiv);
   aResp.addEventListener("keydown", function(ev){ if(ev.key === "Enter"){ ev.preventDefault(); responder(); } });
   aResp.addEventListener("input", function(){
-    if(ativ.tipo === "desafio"){ responderDesafio(); return; }
     if(ativ.tipo === "codificar"){
       aResp.value = aResp.value.replace(/[^.\-\/ ]/g, "");
       desenharSimbolos(aVis, aResp.value);
@@ -1562,6 +1564,11 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     pintarSom(); pintarVoz();
     ["pisc", "vib", "ruido", "fark", "chave", "mic", "koch"].forEach(function(n){ setEf(n, false); });
     micParar();
+    EF.cor = "#ffffff"; EF.opac = 40; EF.farkW = 8;
+    document.getElementById("pisc-cor").value = EF.cor;
+    document.getElementById("pisc-op").value = EF.opac;
+    document.getElementById("pisc-opv").textContent = EF.opac + "%";
+    document.getElementById("farkw").value = EF.farkW;
     var d = detectar();
     setLang(d.lang, true);
     langNota.textContent = notaDeteccao(d);
@@ -1644,10 +1651,17 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       }
     }, 300);
   }
+  var efTimers = [];
+  function limparEfeitos(){
+    efTimers.forEach(clearTimeout);
+    efTimers = [];
+    pisco(false);
+    if(navigator.vibrate) navigator.vibrate(0);
+  }
   function efeitos(c, start, d){
     var atraso = Math.max(0, (start - c.currentTime) * 1000);
-    if(EF.pisc) setTimeout(function(){ pisco(true); setTimeout(function(){ pisco(false); }, d * 1000); }, atraso);
-    if(EF.vib && navigator.vibrate) setTimeout(function(){ navigator.vibrate(Math.round(d * 1000)); }, atraso);
+    if(EF.pisc) efTimers.push(setTimeout(function(){ pisco(true); efTimers.push(setTimeout(function(){ pisco(false); }, d * 1000)); }, atraso));
+    if(EF.vib && navigator.vibrate) efTimers.push(setTimeout(function(){ navigator.vibrate(Math.round(d * 1000)); }, atraso));
     if(EF.ruido) ruidoAte(c, start + d);
   }
 
@@ -1863,7 +1877,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
   function tickDesafio(){
     var rest = Math.max(0, Math.ceil((desafio.fim - Date.now()) / 1000));
     if(rest <= 0){ fimDesafio(); return; }
-    aEnun.textContent = "Desafio: ouça e digite o caractere. Tempo: " + rest + " s · Pontos: " + desafio.pontos + " · Recorde: " + desafio.recorde + ". Errar custa 2 segundos.";
+    aEnun.textContent = "Desafio: ouça e digite o caractere. Tempo: " + rest + " s · Pontos: " + desafio.pontos + " · Recorde: " + desafio.recorde + ". Enter ou Responder confirma. Errar custa 2 segundos.";
   }
   function fimDesafio(){
     clearInterval(desafio.timer);
@@ -1880,13 +1894,16 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     if(!desafio.rodando || !ativ.item) return;
     var r = limparTexto(aResp.value);
     if(!r) return;
-    var certo = r === ativ.item.resp;
-    registrarChar(ativ.item.resp, r);
+    var antes = ativ.item, certo = r === antes.resp;
+    registrarChar(antes.resp, r);
     registrarDia();
     if(certo) desafio.pontos++; else desafio.fim -= 2000;
     aResp.value = "";
     tickDesafio();
     if(desafio.rodando) novaTarefa(true);
+    aFb.style.color = certo ? "var(--accent)" : "#e08a80";
+    aFb.textContent = certo ? "Certo!" : "Errado. Era " + antes.mostrar + " (" + antes.morse + ").";
+    aResp.focus();
   }
   ligaSw("pisc", "swpisc", "swpiscv", "Ativado", "Desativado", function(on){
     if(on){ getCtx(); prever(); } else { pisco(false); }
