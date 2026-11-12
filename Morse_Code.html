@@ -106,6 +106,14 @@ details.saber{background:var(--panel);border:1px solid var(--line);border-radius
 details.saber summary{cursor:pointer}
 .ativ-texto{margin:0 0 .8rem;padding:.8rem 1rem;background:var(--panel);border:1px solid var(--line);border-radius:.6rem;font-size:1.1rem;line-height:1.6;letter-spacing:.05em;max-height:14rem;overflow:auto}
 #ativ-visual{max-height:16rem;overflow:auto}
+#pisco{position:fixed;inset:0;z-index:900;pointer-events:none;opacity:0}
+input[type=color]{width:3rem;height:2.6rem;padding:0;border:1px solid var(--line);border-radius:.4rem;background:var(--panel);cursor:pointer;flex:none}
+#chave{display:block;width:100%;min-height:7rem;margin:.5rem 0 1rem;font-size:1.2rem;line-height:1.4;border:2px solid var(--accent);color:var(--accent);touch-action:none;user-select:none;-webkit-user-select:none}
+#chave.down{background:var(--accent);color:#2b2e32}
+#linkout{width:100%;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:.5rem;padding:.6rem;font:inherit;font-size:.85rem;margin-bottom:.6rem}
+.oculto{filter:blur(8px);user-select:none}
+.estchip{display:inline-block;margin:.2rem .3rem .2rem 0;padding:.25rem .55rem;border:1px solid var(--line);border-radius:.4rem;font-size:.85rem}
+.estchip.bom{border-color:var(--accent);color:var(--accent)}
 .caret{width:2px;height:2.2rem;border-radius:1px;background:var(--text);margin:0 .1rem}
 .btns{display:flex;flex-wrap:wrap;gap:.5rem}
 .btns button{flex:1 1 9rem;font-size:1rem}
@@ -124,6 +132,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
   <div class="morse-load" aria-hidden="true"><i class="p"></i><i class="p"></i><i class="t"></i></div>
   <p>Adaptando a interface...</p>
 </div>
+<div id="pisco" aria-hidden="true"></div>
 <main>
   <h1>Código Morse</h1>
   <div class="tabs" role="tablist">
@@ -149,6 +158,8 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     <button class="small" data-act="back" aria-label="Apagar último">apagar</button>
     <button class="small" data-act="clear" aria-label="Limpar tudo">limpar</button>
   </div>
+  <button type="button" id="chave" hidden>Segure para transmitir<br><small>(ou use a barra de espaço)</small></button>
+  <p class="hint" id="mic-box" hidden style="margin:.5rem 0 1rem"></p>
 
   </div>
 
@@ -162,7 +173,11 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     <div class="btns" style="margin-bottom:2rem">
       <button id="copiar" type="button">Copiar Morse</button>
       <button id="usar" type="button">Abrir no decodificador</button>
+      <button id="linkmsg" type="button">Copiar link da mensagem</button>
+      <button id="baixarwav" type="button">Baixar áudio (.wav)</button>
     </div>
+    <input type="text" id="linkout" readonly hidden aria-label="Link da mensagem">
+    <p class="hint" style="margin:0 0 2rem;font-size:.8rem">O link abre o site já com a mensagem em Morse, com a tradução escondida, como um enigma para o amigo decifrar. O download do .wav funciona no site publicado (por exemplo, no GitHub Pages) ou aberto direto do arquivo. Na prévia do Claude ele pode ficar bloqueado.</p>
   </div>
 
   <div id="pane-apr" hidden>
@@ -204,7 +219,14 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       <button type="button" data-tipo="ouvir" aria-pressed="true">Ouvir e acertar</button>
       <button type="button" data-tipo="decifrar" aria-pressed="false">Decifrar a palavra</button>
       <button type="button" data-tipo="codificar" aria-pressed="false">Codificar a palavra</button>
+      <button type="button" data-tipo="desafio" aria-pressed="false">Desafio (60 s)</button>
     </div>
+    <div class="row" style="margin-bottom:.6rem">
+      <label for="swkoch">Koch automático</label>
+      <button type="button" id="swkoch" class="switch" role="switch" aria-checked="false" aria-label="Koch automático"></button>
+      <span id="swkochv">Desativado</span>
+    </div>
+    <p class="hint" id="koch-info" hidden style="margin:0 0 1rem"></p>
     <div class="row" id="ativ-nivel-row" style="margin-bottom:1rem">
       <label for="ativ-nivel">Nível</label>
       <select id="ativ-nivel"></select>
@@ -225,6 +247,10 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
         <button type="button" data-preset="tudo">Letras e números</button>
         <button type="button" data-preset="nada">Limpar</button>
       </div>
+    </details>
+    <details class="saber" id="est">
+      <summary>Estatísticas</summary>
+      <div id="est-corpo" style="margin-top:.6rem;line-height:1.7"></div>
     </details>
     <p class="ativ-enun" id="ativ-enun"></p>
     <p class="ativ-texto" id="ativ-texto" hidden></p>
@@ -313,6 +339,55 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       <input type="range" id="vol" min="0" max="100" step="1" value="30">
       <span id="volv">30%</span>
     </div>
+    <div class="row">
+      <label for="swpisc">Piscar a tela</label>
+      <button type="button" id="swpisc" class="switch" role="switch" aria-checked="false" aria-label="Piscar a tela"></button>
+      <span id="swpiscv">Desativado</span>
+    </div>
+    <div id="pisc-opcoes" hidden style="display:grid;gap:.9rem">
+      <div class="row">
+        <label for="pisc-cor">Cor do pisca</label>
+        <input type="color" id="pisc-cor" value="#ffffff" aria-label="Cor do pisca">
+        <button type="button" id="gota" class="small" style="flex:none;min-height:2.6rem;padding:0 .8rem">Conta-gotas</button>
+      </div>
+      <div class="row">
+        <label for="pisc-op">Opacidade</label>
+        <input type="range" id="pisc-op" min="5" max="100" step="1" value="40">
+        <span id="pisc-opv">40%</span>
+      </div>
+      <p class="hint" style="margin:0;font-size:.8rem">Aviso: luzes piscando podem causar desconforto ou crises em pessoas sensíveis. Prefira opacidade baixa e velocidades menores.</p>
+    </div>
+    <div class="row">
+      <label for="swvib">Vibrar (celular)</label>
+      <button type="button" id="swvib" class="switch" role="switch" aria-checked="false" aria-label="Vibrar"></button>
+      <span id="swvibv">Desativada</span>
+    </div>
+    <div class="row">
+      <label for="swruido">Chiado de rádio</label>
+      <button type="button" id="swruido" class="switch" role="switch" aria-checked="false" aria-label="Chiado de rádio"></button>
+      <span id="swruidov">Desativado</span>
+    </div>
+    <div class="row">
+      <label for="swfark">Farnsworth</label>
+      <button type="button" id="swfark" class="switch" role="switch" aria-checked="false" aria-label="Espaçamento Farnsworth"></button>
+      <span id="swfarkv">Desativado</span>
+    </div>
+    <div class="row" id="fark-opts" hidden>
+      <label for="farkw">WPM geral</label>
+      <input type="number" id="farkw" min="1" max="60" step="1" value="8" inputmode="numeric">
+      <span>Letras no WPM acima, com pausas mais longas até chegar a esta velocidade geral.</span>
+    </div>
+    <div class="row">
+      <label for="swchave">Chave telegráfica</label>
+      <button type="button" id="swchave" class="switch" role="switch" aria-checked="false" aria-label="Chave telegráfica"></button>
+      <span id="swchavev">Desativada</span>
+    </div>
+    <div class="row">
+      <label for="swmic">Microfone</label>
+      <button type="button" id="swmic" class="switch" role="switch" aria-checked="false" aria-label="Decodificar pelo microfone"></button>
+      <span id="swmicv">Desligado</span>
+    </div>
+    <p class="hint" style="margin:0;font-size:.8rem">A chave telegráfica e o microfone escrevem na aba Decodificar. Para o microfone funcionar, combine a velocidade (WPM) e a frequência (Hz) com o som que vai captar.</p>
     <div class="btns">
       <button id="testar" type="button">Testar som</button>
       <button id="play" type="button">Tocar mensagem</button>
@@ -322,6 +397,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
   </div>
 
   <div id="out-dec">
+  <div id="enigma" hidden class="hint" style="margin-bottom:1rem">Você recebeu uma mensagem secreta em Morse! Tente decifrar pelos símbolos ou de ouvido. <button type="button" id="revelar" class="small" style="flex:none;min-height:2.4rem;padding:0 .8rem;margin-left:.5rem">Mostrar tradução</button></div>
   <h2>Tradução</h2>
   <p class="decoded" id="texto" aria-live="polite" style="margin-bottom:1.25rem"></p>
   <h2>O que você escreveu</h2>
@@ -576,6 +652,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     g.gain.linearRampToValueAtTime(0, start + d);
     o.connect(g); g.connect(c.destination);
     o.start(start); o.stop(start + d + 0.02);
+    efeitos(c, start, d);
     return o;
   }
   function beep(ch, force){
@@ -595,14 +672,14 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     if(playing.length){ stopPlay(); return; }
     var c = getCtx();
     if(!c) return;
-    var u = unit(), t = c.currentTime + 0.05, first = true;
+    var u = unit(), gp = gaps(), t = c.currentTime + 0.05, first = true;
     currentMorse().split(/\/{2,}/).forEach(function(w){
       var letters = w.split("/").filter(Boolean);
       if(!letters.length) return;
-      if(!first) t += 7 * u;
+      if(!first) t += gp.palavra;
       first = false;
       letters.forEach(function(l, li){
-        if(li > 0) t += 3 * u;
+        if(li > 0) t += gp.letra;
         for(var i = 0; i < l.length; i++){
           var d = (l[i] === "." ? 1 : 3) * u;
           playing.push(tone(c, t, d));
@@ -773,7 +850,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     var c = getCtx();
     if(!c) return;
     pararAtiv();
-    var u = unit(), t = c.currentTime + 0.05, i = 0;
+    var u = unit(), gp = gaps(), t = c.currentTime + 0.05, i = 0;
     tocandoAtiv = true;
     atualizarBotaoOuvir();
     function passo(){
@@ -784,7 +861,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
           audAtiv.push(tone(c, t, d));
           t += d + u;
         } else if(ch === "/"){
-          if(m[i] === "/"){ i++; t += 6 * u; } else { t += 2 * u; }
+          if(m[i] === "/"){ i++; t += gp.palavra - u; } else { t += gp.letra - u; }
         }
       }
       if(i < m.length) timerAtiv = setTimeout(passo, 500);
@@ -848,7 +925,6 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       el.appendChild(s);
     }
   }
-  function bonito(m){ return m.replace(/\./g, "\u2022").replace(/-/g, "\u2013").replace(/\//g, " "); }
   function placar(){
     document.getElementById("ativ-placar").textContent = "Acertos: " + ativ.acertos + " de " + ativ.total + " \u00b7 Sequ\u00eancia: " + ativ.seq + " \u00b7 Melhor: " + ativ.melhor;
   }
@@ -866,10 +942,27 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     aTexto.hidden = true;
     document.getElementById("ativ-keys").hidden = tipo !== "codificar";
     document.getElementById("ativ-vis-row").hidden = tipo !== "decifrar";
+    document.getElementById("ativ-nivel-row").hidden = tipo === "desafio" || (tipo === "ouvir" && EF.koch);
+    if(tipo !== "desafio" && desafio.rodando){ clearInterval(desafio.timer); desafio.rodando = false; }
     infoNivel();
     aResp.inputMode = tipo === "codificar" ? "none" : "text";
     aResp.maxLength = 8000;
-    if(tipo === "ouvir"){
+    if(tipo === "ouvir" && EF.koch){
+      txt = sorteia(kochPool());
+      aEnun.textContent = "Koch automático: ouça e digite o caractere. Liberados agora: " + kochPool().join(" ") + ".";
+      aResp.placeholder = "?";
+      ativ.item = {resp: txt, morse: REV[txt], mostrar: txt};
+      if(tocar) tocarAtiv();
+    } else if(tipo === "desafio"){
+      var pool2 = listaSaber();
+      if(!pool2.length) pool2 = ["E", "T"];
+      txt = sorteia(pool2);
+      ativ.item = {resp: txt, morse: REV[txt], mostrar: txt};
+      aResp.placeholder = "?";
+      if(!desafio.rodando) iniciarDesafio();
+      tickDesafio();
+      tocarAtiv();
+    } else if(tipo === "ouvir"){
       if(nv.oc){
         var pool = listaSaber();
         if(!pool.length) pool = ["E", "T"];
@@ -896,7 +989,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       txt = gerarTexto(nv.pw, nv.wl);
       m = encodeText(txt);
       ativ.item = {resp: m, morse: m, mostrar: txt};
-      aEnun.textContent = "Escreva em Morse " + (nv.pw[1] > 1 ? "o texto abaixo" : "a palavra abaixo") + ", usando . - e / entre as letras e // entre as palavras.";
+      aEnun.textContent = "Escreva em Morse " + (nv.pw[1] > 1 ? "o texto abaixo" : "a palavra abaixo") + ", usando . - e / entre as letras e // entre as palavras (também vale espaço entre as letras e / entre as palavras).";
       aTexto.textContent = txt;
       aTexto.hidden = false;
       aVis.hidden = false;
@@ -904,21 +997,33 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     }
     if(ativ.aviso) aEnun.textContent += " Aviso: este texto usa caracteres que você ainda não marcou no menu.";
   }
+  function morseIgual(r, esperado){
+    var a = r.replace(/[^.\-\/\s]/g, "");
+    if(a.replace(/\s+/g, "").replace(/^\/+|\/+$/g, "") === esperado) return true;
+    var padrao = esperado.split("//").map(function(w){ return w.split("/").join(" "); }).join(" / ");
+    return a.replace(/\s+/g, " ").trim() === padrao;
+  }
   function responder(){
+    if(ativ.tipo === "desafio"){ responderDesafio(); return; }
     if(!ativ.item) return;
     if(ativ.ok){ novaTarefa(true); return; }
     var r = aResp.value.trim();
     if(!r) return;
     var certo;
-    if(ativ.tipo === "codificar") certo = r.replace(/[^.\-\/]/g, "").replace(/^\/+|\/+$/g, "") === ativ.item.resp;
+    if(ativ.tipo === "codificar") certo = morseIgual(r, ativ.item.resp);
     else certo = limparTexto(r) === ativ.item.resp;
     ativ.ok = true;
     ativ.total++;
     if(certo){ ativ.acertos++; ativ.seq++; ativ.melhor = Math.max(ativ.melhor, ativ.seq); }
     else ativ.seq = 0;
     aFb.style.color = certo ? "var(--accent)" : "#e08a80";
-    aFb.textContent = certo ? "Correto!" : "N\u00e3o foi dessa vez. Resposta: " + (ativ.tipo === "codificar" ? bonito(ativ.item.morse) : ativ.item.mostrar) + (ativ.tipo === "ouvir" ? " (" + bonito(ativ.item.morse) + ")" : "");
+    aFb.textContent = certo ? "Correto!" : "N\u00e3o foi dessa vez. Resposta: " + (ativ.tipo === "codificar" ? ativ.item.morse : ativ.item.mostrar) + (ativ.tipo === "ouvir" ? " (" + ativ.item.morse + ")" : "");
     placar();
+    salvar();
+    if(ativ.tipo === "ouvir" && (EF.koch || NIVEIS[ativ.nivel].oc)) registrarChar(ativ.item.resp, limparTexto(r));
+    registrarDia();
+    if(EF.koch && ativ.tipo === "ouvir") kochRegistra(certo);
+    pintarEst();
     salvar();
     if(certo) ativ.timer = setTimeout(function(){ if(ativ.ok && mode === "ati") novaTarefa(true); }, 1200);
   }
@@ -960,8 +1065,9 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
   document.getElementById("ativ-ouvir").addEventListener("click", tocarAtiv);
   aResp.addEventListener("keydown", function(ev){ if(ev.key === "Enter"){ ev.preventDefault(); responder(); } });
   aResp.addEventListener("input", function(){
+    if(ativ.tipo === "desafio"){ responderDesafio(); return; }
     if(ativ.tipo === "codificar"){
-      aResp.value = aResp.value.replace(/[^.\-\/]/g, "");
+      aResp.value = aResp.value.replace(/[^.\-\/ ]/g, "");
       desenharSimbolos(aVis, aResp.value);
     }
   });
@@ -1080,6 +1186,21 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     "COM AJUDA DOS VIZINHOS CULTIVA PLANTAS CRIA ANIMAIS E PESCA NO RIO",
     "AOS POUCOS A FAZENDA PROSPERA E A VILA VOLTA A TER UM NOVO BRILHO"
   ]);
+  [
+    ["A ESCOLA ABRE AS PORTAS CEDO E OS ALUNOS CHEGAM COM SORRISOS NO ROSTO", "NA PRIMEIRA AULA A PROFESSORA CONTA UMA HISTORIA SOBRE UM BARCO PERDIDO NO MAR", "TODOS OUVEM EM SILENCIO E DEPOIS FAZEM PERGUNTAS CHEIAS DE CURIOSIDADE", "NO RECREIO AS CRIANCAS CORREM BRINCAM E DIVIDEM O LANCHE COM OS COLEGAS", "NO FIM DO DIA CADA UM VOLTA PARA CASA PENSANDO NO QUE VAI APRENDER AMANHA"],
+    ["NA FLORESTA AS ARVORES SAO ALTAS E OS PASSAROS CANTAM DESDE O AMANHECER", "UM PEQUENO RIO CORTA O CAMINHO E A AGUA E TAO CLARA QUE DA PARA VER OS PEIXES", "O VENTO BALANCA AS FOLHAS E ESPALHA O CHEIRO DA TERRA MOLHADA", "QUEM CAMINHA POR ALI APRENDE A OUVIR O SILENCIO E A RESPEITAR A NATUREZA"],
+    ["A TERRA GIRA AO REDOR DO SOL E LEVA UM ANO PARA COMPLETAR UMA VOLTA", "A LUA GIRA AO REDOR DA TERRA E MUDA DE FORMA AO LONGO DO MES", "OS ASTRONAUTAS USAM TRAJES ESPECIAIS PARA PROTEGER O CORPO NO ESPACO", "UM DIA O SER HUMANO PODE CHEGAR A OUTROS PLANETAS"],
+    ["O GATO DORME QUASE O DIA INTEIRO E ACORDA PARA CACAR OU BRINCAR", "O CACHORRO GOSTA DE CORRER NO PARQUE E SEMPRE ESPERA O DONO NA PORTA", "AS ABELHAS FAZEM MEL E AJUDAM AS FLORES A SE REPRODUZIR", "SEM AS ABELHAS MUITAS PLANTAS TERIAM DIFICULDADE PARA DAR FRUTOS"],
+    ["PARA FAZER UM BOLO DE CENOURA PRIMEIRO MISTURE OS OVOS COM O OLEO E A CENOURA", "DEPOIS ACRESCENTE O ACUCAR E A FARINHA E MEXA ATE FICAR UMA MASSA LISA", "LEVE AO FORNO MEDIO ATE QUE UM PALITO SAIA LIMPO", "ESPERE ESFRIAR E SIRVA COM UMA COBERTURA DE CHOCOLATE"],
+    ["A INTERNET CONECTA PESSOAS DE TODOS OS CANTOS DO MUNDO EM SEGUNDOS", "ANTES DELA AS MENSAGENS LEVAVAM DIAS PARA CHEGAR AO DESTINO", "HOJE UMA FOTO UM VIDEO OU UMA CONVERSA ATRAVESSAM O OCEANO NUM INSTANTE", "O TELEGRAFO FOI UM DOS PRIMEIROS PASSOS DESSA GRANDE HISTORIA"],
+    ["O FUTEBOL E O ESPORTE MAIS POPULAR DO BRASIL E REUNE MILHOES DE TORCEDORES", "CADA TIME TEM ONZE JOGADORES EM CAMPO E O OBJETIVO E MARCAR GOLS", "A BOLA ROLA O PUBLICO VIBRA E A EMOCAO SO TERMINA NO APITO FINAL"],
+    ["UM BOM AMIGO ESTA AO SEU LADO NA ALEGRIA E TAMBEM NOS MOMENTOS DIFICEIS", "COMPARTILHAR UM SORRISO UMA AJUDA OU UM ABRACO FAZ O DIA FICAR MAIS LEVE", "A GENTILEZA NAO CUSTA NADA E PODE MUDAR A VIDA DE ALGUEM"],
+    ["QUANDO CHOVE O CEU FICA CINZA E O CHEIRO DE TERRA MOLHADA TOMA A RUA", "DEPOIS DA TEMPESTADE O SOL VOLTA E UM ARCO IRIS COLORE O HORIZONTE", "AS CRIANCAS SAEM PARA PULAR NAS POCAS E O DIA FICA MAIS ALEGRE"],
+    ["SONIC E UM OURICO AZUL MUITO VELOZ QUE ADORA CORRER PELO MUNDO", "SEU MAIOR INIMIGO E O DOUTOR EGGMAN QUE QUER DOMINAR O PLANETA COM ROBOS", "TAILS E UM RAPOSINHO AMIGO DE SONIC E O AJUDA COM SUAS INVENCOES", "JUNTOS ELES RECOLHEM ANEIS E ESMERALDAS PARA DETER OS PLANOS DE EGGMAN"],
+    ["O TETRIS FOI CRIADO POR ALEXEY PAJITNOV EM 1984 NA UNIAO SOVIETICA", "O JOGADOR ENCAIXA PECAS QUE CAEM PARA FORMAR LINHAS COMPLETAS", "QUANTO MAIS O JOGO AVANCA MAIS RAPIDO AS PECAS DESCEM", "ATE HOJE ELE E LEMBRADO COMO UM DOS JOGOS MAIS FAMOSOS DA HISTORIA"],
+    ["PAC MAN E UM PERSONAGEM REDONDO E AMARELO QUE COME PONTOS EM UM LABIRINTO", "QUATRO FANTASMAS COLORIDOS PERSEGUEM O HEROI PELOS CORREDORES", "AO COMER UMA PILULA ESPECIAL ELE PODE ENFRENTAR OS FANTASMAS POR POUCO TEMPO"],
+    ["EM TERRARIA O JOGADOR CAVA CONSTROI E LUTA EM UM MUNDO EM DUAS DIMENSOES", "COM OS MATERIAIS QUE ENCONTRA ELE FAZ ARMAS FERRAMENTAS E CASAS", "AO LONGO DA AVENTURA ENFRENTA CHEFES PODEROSOS COMO O OLHO DE CTHULHU"]
+  ].forEach(function(g){ GRUPOS.push(g); });
   function conhecida(f){ return f.split("").every(function(c){ return c === " " || known[c]; }); }
   function desconhecidos(f){
     var n = 0;
@@ -1419,9 +1540,457 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     vol.value = 30; volv.textContent = "30%";
     soundOn = true; voiceOn = true;
     pintarSom(); pintarVoz();
+    ["pisc", "vib", "ruido", "fark", "chave", "mic", "koch"].forEach(function(n){ setEf(n, false); });
+    micParar();
     var d = detectar();
     setLang(d.lang, true);
     langNota.textContent = notaDeteccao(d);
+  });
+
+  var EF = {pisc: false, cor: "#ffffff", opac: 40, vib: false, ruido: false, fark: false, farkW: 8, chave: false, mic: false, koch: false};
+  var SW = {};
+  var KOCH = "KMRSUAPTLOWI.NJEF0YVG5Q9ZH38B?427C1D6X";
+  var kochN = 2, kochHist = [];
+  var EST = {tempo: 0, dias: 0, ultimo: "", chars: {}};
+  var desafio = {rodando: false, fim: 0, pontos: 0, recorde: 0, timer: null};
+  var chaveBtn = document.getElementById("chave");
+  var micEl = document.getElementById("mic-box");
+
+  function ligaSw(nome, btnId, spanId, onTxt, offTxt, aoMudar){
+    SW[nome] = {b: document.getElementById(btnId), sp: document.getElementById(spanId), on: onTxt, off: offTxt};
+    SW[nome].b.addEventListener("click", function(){
+      setEf(nome, !EF[nome]);
+      if(aoMudar) aoMudar(EF[nome]);
+    });
+  }
+  function setEf(nome, v){
+    if(nome === "vib" && v && !navigator.vibrate) v = false;
+    EF[nome] = v;
+    var x = SW[nome];
+    if(x){ x.b.setAttribute("aria-checked", String(v)); x.sp.textContent = v ? x.on : x.off; }
+    aplicarEf();
+  }
+  function aplicarEf(){
+    document.getElementById("pisc-opcoes").hidden = !EF.pisc;
+    document.getElementById("fark-opts").hidden = !EF.fark;
+    chaveBtn.hidden = !EF.chave;
+    micEl.hidden = !EF.mic;
+    document.getElementById("koch-info").hidden = !EF.koch;
+  }
+
+  function pisco(on){
+    var el = document.getElementById("pisco");
+    el.style.backgroundColor = EF.cor;
+    el.style.opacity = on ? String(EF.opac / 100) : "0";
+  }
+  var pvT = null;
+  function prever(){
+    pisco(true);
+    clearTimeout(pvT);
+    pvT = setTimeout(function(){ pisco(false); }, 300);
+  }
+  function gaps(){
+    var u = unit();
+    if(EF.fark && EF.farkW < curWpm){
+      var ta = (60 * curWpm - 37.2 * EF.farkW) / (curWpm * EF.farkW);
+      return {letra: 3 * ta / 19, palavra: 7 * ta / 19};
+    }
+    return {letra: 3 * u, palavra: 7 * u};
+  }
+
+  var ruidoNo = null, ruidoFim = 0, ruidoTimer = null;
+  function ruidoAte(c, fim){
+    ruidoFim = Math.max(ruidoFim, fim + 0.3);
+    if(ruidoNo) return;
+    var len = c.sampleRate * 2, buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0), i;
+    for(i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    var src = c.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    var f = c.createBiquadFilter();
+    f.type = "bandpass"; f.frequency.value = Number(freq.value); f.Q.value = 0.4;
+    var g = c.createGain();
+    g.gain.value = 0;
+    src.connect(f); f.connect(g); g.connect(c.destination);
+    src.start();
+    g.gain.setTargetAtTime(Number(vol.value) / 100 * 0.1, c.currentTime, 0.05);
+    var no = {src: src, g: g};
+    ruidoNo = no;
+    ruidoTimer = setInterval(function(){
+      if(c.currentTime > ruidoFim){
+        no.g.gain.setTargetAtTime(0, c.currentTime, 0.05);
+        ruidoNo = null;
+        clearInterval(ruidoTimer);
+        setTimeout(function(){ try{ no.src.stop(); }catch(e){} }, 400);
+      }
+    }, 300);
+  }
+  function efeitos(c, start, d){
+    var atraso = Math.max(0, (start - c.currentTime) * 1000);
+    if(EF.pisc) setTimeout(function(){ pisco(true); setTimeout(function(){ pisco(false); }, d * 1000); }, atraso);
+    if(EF.vib && navigator.vibrate) setTimeout(function(){ navigator.vibrate(Math.round(d * 1000)); }, atraso);
+    if(EF.ruido) ruidoAte(c, start + d);
+  }
+
+  /* Chave telegráfica e microfone: ambos viram símbolos no campo do Decodificar */
+  var chaveTom = null, chaveT0 = 0, chaveGap = 0, chaveUltimo = 0;
+  function emitirSimbolo(durMs, gapMs){
+    var u = unit() * 1000, v = input.value, add = "";
+    if(v && v.slice(-1) !== "/"){
+      if(gapMs > 5 * u) add = "//";
+      else if(gapMs > 2.5 * u) add = "/";
+    }
+    var sym = durMs < 2 * u ? "." : "-", pos = v.length;
+    input.setRangeText(add + sym, pos, pos, "end");
+    render();
+    for(var k = 0; k < add.length; k++) react(input.value, pos + k + 1);
+    salvar();
+  }
+  function chaveBaixo(){
+    if(chaveTom) return;
+    var c = getCtx();
+    if(!c) return;
+    var agora = performance.now();
+    chaveT0 = agora;
+    chaveGap = chaveUltimo ? agora - chaveUltimo : 0;
+    var o = c.createOscillator(), g = c.createGain();
+    o.type = "sine";
+    o.frequency.value = Number(freq.value);
+    g.gain.setValueAtTime(0, c.currentTime);
+    g.gain.linearRampToValueAtTime(Number(vol.value) / 100 * 0.5, c.currentTime + 0.008);
+    o.connect(g); g.connect(c.destination);
+    o.start();
+    chaveTom = {o: o, g: g, c: c};
+    chaveBtn.classList.add("down");
+    if(EF.pisc) pisco(true);
+    if(EF.vib && navigator.vibrate) navigator.vibrate(2000);
+  }
+  function chaveCima(){
+    if(!chaveTom) return;
+    var t = chaveTom, c = t.c, agora = performance.now();
+    chaveTom = null;
+    t.g.gain.cancelScheduledValues(c.currentTime);
+    t.g.gain.setValueAtTime(t.g.gain.value, c.currentTime);
+    t.g.gain.linearRampToValueAtTime(0, c.currentTime + 0.01);
+    t.o.stop(c.currentTime + 0.03);
+    chaveBtn.classList.remove("down");
+    if(EF.pisc) pisco(false);
+    if(EF.vib && navigator.vibrate) navigator.vibrate(0);
+    chaveUltimo = agora;
+    emitirSimbolo(agora - chaveT0, chaveGap);
+  }
+  chaveBtn.addEventListener("pointerdown", function(ev){
+    ev.preventDefault();
+    if(chaveBtn.setPointerCapture) try{ chaveBtn.setPointerCapture(ev.pointerId); }catch(e){}
+    chaveBaixo();
+  });
+  ["pointerup", "pointercancel"].forEach(function(t){ chaveBtn.addEventListener(t, chaveCima); });
+  document.addEventListener("keydown", function(ev){
+    if(!EF.chave || mode !== "dec" || ev.code !== "Space" || ev.repeat) return;
+    var tg = ev.target && ev.target.tagName;
+    if(tg === "TEXTAREA" || tg === "INPUT" || tg === "SELECT" || tg === "BUTTON") return;
+    ev.preventDefault();
+    chaveBaixo();
+  });
+  document.addEventListener("keyup", function(ev){ if(ev.code === "Space") chaveCima(); });
+
+  var micEstado = {on: false};
+  function micFalha(msg){
+    micEl.textContent = msg;
+    micEl.hidden = false;
+    setEf("mic", false);
+    micEl.hidden = false;
+  }
+  function micIniciar(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ micFalha("Este navegador não permite usar o microfone."); return; }
+    micEl.textContent = "Pedindo permissão do microfone...";
+    navigator.mediaDevices.getUserMedia({audio: {echoCancellation: false, noiseSuppression: false, autoGainControl: false}}).then(function(stream){
+      if(!EF.mic){ stream.getTracks().forEach(function(t){ t.stop(); }); return; }
+      var AC = window.AudioContext || window.webkitAudioContext, mc = new AC();
+      var src = mc.createMediaStreamSource(stream), an = mc.createAnalyser();
+      an.fftSize = 2048; an.smoothingTimeConstant = 0;
+      src.connect(an);
+      micEstado = {on: true, stream: stream, ctx: mc, an: an, buf: new Float32Array(an.frequencyBinCount), tom: false, cont: 0, t0: 0, fim: 0, gap: 0, raf: 0};
+      micEl.textContent = "Ouvindo o microfone. Combine a velocidade (WPM) e a frequência (Hz) dos ajustes com o som que você vai captar.";
+      micLoop();
+    }, function(){ micFalha("Permissão de microfone negada ou indisponível."); });
+  }
+  function micLoop(){
+    var m = micEstado;
+    if(!m.on) return;
+    m.an.getFloatFrequencyData(m.buf);
+    var k = Math.round(Number(freq.value) / (m.ctx.sampleRate / m.an.fftSize)), pico = -200, soma = 0, n = 0, i;
+    for(i = k - 1; i <= k + 1; i++) if(m.buf[i] > pico) pico = m.buf[i];
+    for(i = k - 30; i <= k + 30; i++){ if(i > 0 && Math.abs(i - k) > 4){ soma += m.buf[i]; n++; } }
+    var ligado = (pico - (n ? soma / n : -120)) > 14 && pico > -90, agora = performance.now();
+    if(ligado !== m.tom){
+      m.cont++;
+      if(m.cont >= 2){
+        m.cont = 0;
+        if(ligado){ m.gap = m.fim ? agora - m.fim : 0; m.t0 = agora; }
+        else {
+          var dur = agora - m.t0;
+          m.fim = agora;
+          if(dur > 25) emitirSimbolo(dur, m.gap);
+        }
+        m.tom = ligado;
+      }
+    } else { m.cont = 0; }
+    m.raf = requestAnimationFrame(micLoop);
+  }
+  function micParar(){
+    var m = micEstado;
+    if(!m.on) return;
+    m.on = false;
+    cancelAnimationFrame(m.raf);
+    m.stream.getTracks().forEach(function(t){ t.stop(); });
+    try{ m.ctx.close(); }catch(e){}
+    micEl.textContent = "";
+  }
+
+  /* Koch automático, estatísticas e desafio */
+  function kochPool(){ return KOCH.slice(0, kochN).split(""); }
+  function pintarKoch(){
+    var el = document.getElementById("koch-info");
+    var ac = kochHist.reduce(function(a, b){ return a + b; }, 0);
+    el.textContent = "Koch: " + kochN + " caracteres liberados (" + kochPool().join(" ") + "). Últimas respostas: " + ac + " de " + kochHist.length + ". Com 9 acertos em 10, a próxima letra é liberada.";
+  }
+  function kochRegistra(certo){
+    kochHist.push(certo ? 1 : 0);
+    if(kochHist.length > 10) kochHist.shift();
+    var ac = kochHist.reduce(function(a, b){ return a + b; }, 0);
+    if(kochHist.length >= 10 && ac >= 9 && kochN < KOCH.length){
+      kochN++;
+      kochHist = [];
+      aFb.textContent += " Nova letra liberada: " + KOCH[kochN - 1] + "!";
+    }
+    pintarKoch();
+  }
+  function registrarChar(esperado, digitado){
+    for(var i = 0; i < esperado.length; i++){
+      var ch = esperado[i], st = EST.chars[ch] || (EST.chars[ch] = [0, 0]);
+      st[1]++;
+      if(digitado[i] === ch) st[0]++;
+    }
+  }
+  function diaLocal(d){
+    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+  }
+  function registrarDia(){
+    var h = diaLocal(new Date());
+    if(EST.ultimo === h) return;
+    var o = new Date();
+    o.setDate(o.getDate() - 1);
+    EST.dias = (EST.ultimo === diaLocal(o)) ? EST.dias + 1 : 1;
+    EST.ultimo = h;
+  }
+  function pintarEst(){
+    var corpo = document.getElementById("est-corpo");
+    if(!corpo) return;
+    var t = EST.tempo, h = Math.floor(t / 3600), mi = Math.floor(t % 3600 / 60), se = t % 60;
+    var o = new Date();
+    o.setDate(o.getDate() - 1);
+    var dias = (EST.ultimo === diaLocal(new Date()) || EST.ultimo === diaLocal(o)) ? EST.dias : 0;
+    corpo.textContent = "";
+    [
+      "Tempo total de treino: " + (h ? h + " h " : "") + mi + " min " + se + " s",
+      "Dias seguidos praticando: " + dias,
+      "Maior sequência de acertos: " + ativ.melhor + " · Recorde do desafio: " + desafio.recorde,
+      "Precisão por caractere (no Ouvir e no Desafio):"
+    ].forEach(function(txt){
+      var p = document.createElement("div");
+      p.textContent = txt;
+      corpo.appendChild(p);
+    });
+    var tem = false;
+    CAR.split("").forEach(function(c){
+      var st = EST.chars[c];
+      if(!st || !st[1]) return;
+      tem = true;
+      var pc = Math.round(st[0] / st[1] * 100), chip = document.createElement("span");
+      chip.className = "estchip" + (pc >= 90 ? " bom" : "");
+      chip.textContent = c + " " + pc + "%";
+      chip.title = st[0] + " de " + st[1];
+      corpo.appendChild(chip);
+    });
+    if(!tem){
+      var vazio = document.createElement("div");
+      vazio.textContent = "Ainda sem dados. Faça algumas rodadas do Ouvir e acertar.";
+      corpo.appendChild(vazio);
+    }
+  }
+  function iniciarDesafio(){
+    desafio.rodando = true;
+    desafio.pontos = 0;
+    desafio.fim = Date.now() + 60000;
+    clearInterval(desafio.timer);
+    desafio.timer = setInterval(tickDesafio, 250);
+  }
+  function tickDesafio(){
+    var rest = Math.max(0, Math.ceil((desafio.fim - Date.now()) / 1000));
+    if(rest <= 0){ fimDesafio(); return; }
+    aEnun.textContent = "Desafio: ouça e digite o caractere. Tempo: " + rest + " s · Pontos: " + desafio.pontos + " · Recorde: " + desafio.recorde + ". Errar custa 2 segundos.";
+  }
+  function fimDesafio(){
+    clearInterval(desafio.timer);
+    desafio.rodando = false;
+    pararAtiv();
+    var novo = desafio.pontos > desafio.recorde;
+    if(novo) desafio.recorde = desafio.pontos;
+    aEnun.textContent = "Fim do desafio! Pontos: " + desafio.pontos + (novo ? " (novo recorde!)" : " · Recorde: " + desafio.recorde) + ". Toque em Próxima para jogar de novo.";
+    aResp.value = "";
+    pintarEst();
+    salvar();
+  }
+  function responderDesafio(){
+    if(!desafio.rodando || !ativ.item) return;
+    var r = limparTexto(aResp.value);
+    if(!r) return;
+    var certo = r === ativ.item.resp;
+    registrarChar(ativ.item.resp, r);
+    registrarDia();
+    if(certo) desafio.pontos++; else desafio.fim -= 2000;
+    aResp.value = "";
+    tickDesafio();
+    if(desafio.rodando) novaTarefa(true);
+  }
+  ligaSw("pisc", "swpisc", "swpiscv", "Ativado", "Desativado", function(on){
+    if(on){ getCtx(); prever(); } else { pisco(false); }
+  });
+  ligaSw("vib", "swvib", "swvibv", "Ativada", "Desativada", function(on){ if(on && navigator.vibrate) navigator.vibrate(150); });
+  ligaSw("ruido", "swruido", "swruidov", "Ativado", "Desativado");
+  ligaSw("fark", "swfark", "swfarkv", "Ativado", "Desativado");
+  ligaSw("chave", "swchave", "swchavev", "Ativada", "Desativada", function(on){ if(!on) chaveCima(); });
+  ligaSw("mic", "swmic", "swmicv", "Ligado", "Desligado", function(on){ if(on) micIniciar(); else micParar(); });
+  ligaSw("koch", "swkoch", "swkochv", "Ativado", "Desativado", function(on){
+    if(on){
+      ativ.tipo = "ouvir";
+      Array.prototype.forEach.call(document.querySelectorAll("#ativ-tipos button"), function(x){ x.setAttribute("aria-pressed", String(x.dataset.tipo === "ouvir")); });
+    }
+    pintarKoch();
+    if(ativ.item && mode === "ati") novaTarefa(true);
+  });
+  if(!navigator.vibrate){
+    SW.vib.b.disabled = true;
+    SW.vib.sp.textContent = "Indisponível neste aparelho";
+  }
+  var corIn = document.getElementById("pisc-cor"), opIn = document.getElementById("pisc-op"), gota = document.getElementById("gota");
+  corIn.addEventListener("input", function(){ EF.cor = corIn.value; prever(); });
+  opIn.addEventListener("input", function(){
+    EF.opac = Number(opIn.value);
+    document.getElementById("pisc-opv").textContent = EF.opac + "%";
+    prever();
+  });
+  if(window.EyeDropper){
+    gota.addEventListener("click", function(){
+      new EyeDropper().open().then(function(r){
+        EF.cor = r.sRGBHex;
+        corIn.value = EF.cor;
+        prever();
+      }, function(){});
+    });
+  } else {
+    gota.disabled = true;
+    gota.textContent = "Conta-gotas indisponível neste navegador";
+  }
+  document.getElementById("farkw").addEventListener("input", function(){
+    var n = Number(this.value);
+    if(n >= 1 && n <= 60) EF.farkW = Math.round(n);
+  });
+  document.getElementById("est").addEventListener("toggle", pintarEst);
+  setInterval(function(){
+    if(mode === "ati" && !document.hidden){
+      EST.tempo++;
+      if(EST.tempo % 15 === 0) salvar();
+    }
+  }, 1000);
+
+  /* Link com mensagem e exportação em WAV */
+  function paraHex(t){
+    var b = new TextEncoder().encode(t), s = "";
+    for(var i = 0; i < b.length; i++) s += ("0" + b[i].toString(16)).slice(-2);
+    return s;
+  }
+  function deHex(h){
+    var a = [];
+    for(var i = 0; i < h.length; i += 2) a.push(parseInt(h.substr(i, 2), 16));
+    return new TextDecoder().decode(new Uint8Array(a));
+  }
+  function lerMsgHash(){
+    var m = /^#msg-([0-9a-f]{2,4000})$/i.exec(location.hash);
+    if(!m || m[1].length % 2) return;
+    var t;
+    try{ t = deHex(m[1]).slice(0, 1000); }catch(e){ return; }
+    var cod = encodeText(t);
+    if(!cod) return;
+    input.value = cod;
+    setMode("dec");
+    document.getElementById("enigma").hidden = false;
+    texto.classList.add("oculto");
+    render();
+  }
+  window.addEventListener("hashchange", lerMsgHash);
+  document.getElementById("revelar").addEventListener("click", function(){
+    texto.classList.remove("oculto");
+    document.getElementById("enigma").hidden = true;
+  });
+  document.getElementById("linkmsg").addEventListener("click", function(){
+    var b = this, t = input2.value.trim();
+    if(!t) return;
+    var out = document.getElementById("linkout");
+    out.value = location.href.split("#")[0] + "#msg-" + paraHex(t);
+    out.hidden = false;
+    var fim = function(x){ b.textContent = x; setTimeout(function(){ b.textContent = "Copiar link da mensagem"; }, 2000); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(out.value).then(function(){ fim("Link copiado"); }, function(){ out.select(); fim("Selecione e copie o link"); });
+    } else { out.select(); fim("Selecione e copie o link"); }
+  });
+  function gerarWav(morse){
+    var sr = 22050, u = unit(), gp = gaps(), f = Number(freq.value), i, k;
+    var amp = Number(vol.value) / 100 * 0.5 * 32767;
+    var evs = [], t = 0.25, primeiro = true;
+    morse.split(/\/{2,}/).forEach(function(w){
+      var letras = w.split("/").filter(Boolean);
+      if(!letras.length) return;
+      if(!primeiro) t += gp.palavra;
+      primeiro = false;
+      letras.forEach(function(l, li){
+        if(li > 0) t += gp.letra;
+        for(var j = 0; j < l.length; j++){
+          var d = (l[j] === "." ? 1 : 3) * u;
+          evs.push([t, d]);
+          t += d + (j < l.length - 1 ? u : 0);
+        }
+      });
+    });
+    var n = Math.ceil(Math.min(600, t + 0.4) * sr), pcm = new Int16Array(n), rampa = Math.round(0.008 * sr);
+    evs.forEach(function(e){
+      var a = Math.round(e[0] * sr), len = Math.round(e[1] * sr);
+      for(k = 0; k < len && a + k < n; k++){
+        pcm[a + k] = Math.round(Math.sin(2 * Math.PI * f * k / sr) * amp * Math.min(1, k / rampa, (len - k) / rampa));
+      }
+    });
+    if(EF.ruido){
+      for(i = 0; i < n; i++) pcm[i] = Math.max(-32768, Math.min(32767, Math.round(pcm[i] + (Math.random() * 2 - 1) * amp * 0.25)));
+    }
+    var buf = new ArrayBuffer(44 + n * 2), dv = new DataView(buf);
+    function txt(o, s){ for(var q = 0; q < s.length; q++) dv.setUint8(o + q, s.charCodeAt(q)); }
+    txt(0, "RIFF"); dv.setUint32(4, 36 + n * 2, true); txt(8, "WAVE"); txt(12, "fmt ");
+    dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+    dv.setUint32(24, sr, true); dv.setUint32(28, sr * 2, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true);
+    txt(36, "data"); dv.setUint32(40, n * 2, true);
+    for(i = 0; i < n; i++) dv.setInt16(44 + i * 2, pcm[i], true);
+    return new Blob([buf], {type: "audio/wav"});
+  }
+  document.getElementById("baixarwav").addEventListener("click", function(){
+    var m = encodeText(input2.value);
+    if(!m) return;
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(gerarWav(m));
+    a.download = "morse.wav";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 10000);
   });
 
   var STORE = "morse-estado-v1";
@@ -1429,7 +1998,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     try{
       localStorage.setItem(STORE, JSON.stringify({
         wpm: curWpm, freq: Number(freq.value), vol: Number(vol.value),
-        som: soundOn, voz: voiceOn, modo: mode, dec: input.value, enc: input2.value, lang: curLang, ati: {a: ativ.acertos, t: ativ.total, m: ativ.melhor, k: listaSaber().join(""), n: ativ.nivel, v: ativ.visivel}
+        som: soundOn, voz: voiceOn, modo: mode, dec: input.value, enc: input2.value, lang: curLang, ati: {a: ativ.acertos, t: ativ.total, m: ativ.melhor, k: listaSaber().join(""), n: ativ.nivel, v: ativ.visivel, kn: kochN, dr: desafio.recorde}, ef: {pisc: EF.pisc, cor: EF.cor, opac: EF.opac, vib: EF.vib, ruido: EF.ruido, fark: EF.fark, farkW: EF.farkW, chave: EF.chave, koch: EF.koch}, est: EST
       }));
     }catch(e){}
   }
@@ -1469,6 +2038,23 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       ativ.acertos = s.ati.a | 0; ativ.total = s.ati.t | 0; ativ.melhor = s.ati.m | 0;
       placar();
     }
+    if(s.ef && typeof s.ef === "object"){
+      if(typeof s.ef.cor === "string" && /^#[0-9a-fA-F]{6}$/.test(s.ef.cor)){ EF.cor = s.ef.cor; document.getElementById("pisc-cor").value = EF.cor; }
+      if(typeof s.ef.opac === "number"){
+        EF.opac = Math.min(100, Math.max(5, Math.round(s.ef.opac)));
+        document.getElementById("pisc-op").value = EF.opac;
+        document.getElementById("pisc-opv").textContent = EF.opac + "%";
+      }
+      if(typeof s.ef.farkW === "number"){ EF.farkW = Math.min(60, Math.max(1, Math.round(s.ef.farkW))); document.getElementById("farkw").value = EF.farkW; }
+      ["pisc", "vib", "ruido", "fark", "chave", "koch"].forEach(function(n){ if(s.ef[n] === true) setEf(n, true); });
+    }
+    if(s.est && typeof s.est === "object"){
+      EST.tempo = s.est.tempo | 0; EST.dias = s.est.dias | 0;
+      EST.ultimo = typeof s.est.ultimo === "string" ? s.est.ultimo : "";
+      if(s.est.chars && typeof s.est.chars === "object") EST.chars = s.est.chars;
+    }
+    if(s.ati && typeof s.ati.kn === "number") kochN = Math.min(KOCH.length, Math.max(2, s.ati.kn | 0));
+    if(s.ati && typeof s.ati.dr === "number") desafio.recorde = s.ati.dr | 0;
     setMode(s.modo === "enc" || s.modo === "apr" || s.modo === "ati" ? s.modo : "dec");
     if(mode === "ati" && !ativ.item){ novaTarefa(false); placar(); }
     renderEnc();
@@ -1482,7 +2068,11 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
   carregar();
   iniciarIdioma();
   render();
+  lerMsgHash();
+  aplicarEf();
+  pintarKoch();
+  pintarEst();
 })();
 </script>
 </body>
-</html>
+  </html>
