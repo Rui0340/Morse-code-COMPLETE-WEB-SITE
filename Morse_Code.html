@@ -158,7 +158,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     <button class="small" data-act="back" aria-label="Apagar último">apagar</button>
     <button class="small" data-act="clear" aria-label="Limpar tudo">limpar</button>
   </div>
-  <button type="button" id="chave" hidden>Segure para transmitir<br><small>(ou use a barra de espaço)</small></button>
+  <button type="button" id="chave" hidden>Segure para escrever em Morse<br><small>Toque curto = ponto · toque longo = traço (ou use a barra de espaço)</small></button>
   <p class="hint" id="mic-box" hidden style="margin:.5rem 0 1rem"></p>
 
   </div>
@@ -191,7 +191,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     <ul class="info">
       <li>Aprenda pelo <b>som</b>, não pelo desenho. Ouça cada letra como um ritmo ("di-dá") em vez de contar pontos e traços.</li>
       <li><b>Método Koch:</b> comece já em velocidade alta, com só duas letras, e acrescente uma letra nova quando acertar quase tudo.</li>
-      <li><b>Método Farnsworth:</b> toque cada letra em velocidade real, mas com pausas longas entre elas, e vá encurtando as pausas aos poucos.</li>
+      <li><b>Pausas longas (método Farnsworth):</b> toque cada letra em velocidade real, mas com pausas longas entre elas, e vá encurtando as pausas aos poucos. No site, é a chave "Pausas mais longas" nos ajustes.</li>
       <li>Treine pouco e todo dia: 10 a 15 minutos rendem mais que uma hora de vez em quando.</li>
       <li>Neste site: escreva uma palavra na aba Codificar, escolha uma velocidade baixa e use <b>Tocar mensagem</b>. Depois tente decodificar de ouvido.</li>
     </ul>
@@ -368,26 +368,27 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       <span id="swruidov">Desativado</span>
     </div>
     <div class="row">
-      <label for="swfark">Pausas maiores entre letras</label>
-      <button type="button" id="swfark" class="switch" role="switch" aria-checked="false" aria-label="Espaçamento Farnsworth"></button>
+      <label for="swfark">Pausas mais longas</label>
+      <button type="button" id="swfark" class="switch" role="switch" aria-checked="false" aria-label="Pausas mais longas entre letras e palavras"></button>
       <span id="swfarkv">Desativado</span>
     </div>
     <div class="row" id="fark-opts" hidden>
-      <label for="farkw">WPM geral</label>
+      <label for="farkw">Velocidade geral</label>
       <input type="number" id="farkw" min="1" max="60" step="1" value="8" inputmode="numeric">
-      <span>Letras no WPM acima, com pausas mais longas até chegar a esta velocidade geral.</span>
+      <span>Cada letra toca no WPM acima, e as pausas ficam maiores para a velocidade geral ser esta. Ajuda quem está começando.</span>
     </div>
     <div class="row">
-      <label for="swchave">Transmitir morse pelo botão</label>
-      <button type="button" id="swchave" class="switch" role="switch" aria-checked="false" aria-label="Chave telegráfica"></button>
+      <label for="swchave">Botão de Morse</label>
+      <button type="button" id="swchave" class="switch" role="switch" aria-checked="false" aria-label="Botão de Morse"></button>
       <span id="swchavev">Desativada</span>
     </div>
     <div class="row">
-      <label for="swmic">Microfone</label>
+      <label for="swmic">Ouvir pelo microfone</label>
       <button type="button" id="swmic" class="switch" role="switch" aria-checked="false" aria-label="Decodificar pelo microfone"></button>
       <span id="swmicv">Desligado</span>
     </div>
-    <p class="hint" style="margin:0;font-size:.8rem">A chave telegráfica e o microfone escrevem na aba Decodificar. Para o microfone funcionar, combine a velocidade (WPM) e a frequência (Hz) com o som que vai captar.</p>
+    <p class="hint" id="mic-nota" hidden style="margin:0;font-size:.8rem"></p>
+    <p class="hint" style="margin:0;font-size:.8rem">O botão de Morse e o microfone escrevem na aba Decodificar. Para o microfone funcionar, combine a velocidade (WPM) e a frequência (Hz) com o som que vai captar.</p>
     <div class="btns">
       <button id="testar" type="button">Testar som</button>
       <button id="play" type="button">Tocar mensagem</button>
@@ -1631,7 +1632,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     if(EF.ruido) ruidoAte(c, start + d);
   }
 
-  /* Chave telegráfica e microfone: ambos viram símbolos no campo do Decodificar */
+  /* Botão de Morse (chave telegráfica) e microfone: ambos viram símbolos no campo do Decodificar */
   var chaveTom = null, chaveT0 = 0, chaveGap = 0, chaveUltimo = 0;
   function emitirSimbolo(durMs, gapMs){
     var u = unit() * 1000, v = input.value, add = "";
@@ -1694,25 +1695,40 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
   document.addEventListener("keyup", function(ev){ if(ev.code === "Space") chaveCima(); });
 
   var micEstado = {on: false};
-  function micFalha(msg){
+  var micNota = document.getElementById("mic-nota");
+  function micStatus(msg){
     micEl.textContent = msg;
-    micEl.hidden = false;
+    micNota.textContent = msg;
+    micNota.hidden = !msg;
+  }
+  function micFalha(msg){
     setEf("mic", false);
+    SW.mic.sp.textContent = "Não ativou";
+    micStatus(msg);
     micEl.hidden = false;
   }
   function micIniciar(){
-    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ micFalha("Este navegador não permite usar o microfone."); return; }
-    micEl.textContent = "Pedindo permissão do microfone...";
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      micFalha("Este navegador não permite usar o microfone. Ele precisa de uma página segura (https).");
+      return;
+    }
+    micStatus("Pedindo permissão do microfone...");
     navigator.mediaDevices.getUserMedia({audio: {echoCancellation: false, noiseSuppression: false, autoGainControl: false}}).then(function(stream){
       if(!EF.mic){ stream.getTracks().forEach(function(t){ t.stop(); }); return; }
       var AC = window.AudioContext || window.webkitAudioContext, mc = new AC();
+      if(mc.resume) mc.resume();
       var src = mc.createMediaStreamSource(stream), an = mc.createAnalyser();
       an.fftSize = 2048; an.smoothingTimeConstant = 0;
       src.connect(an);
       micEstado = {on: true, stream: stream, ctx: mc, an: an, buf: new Float32Array(an.frequencyBinCount), tom: false, cont: 0, t0: 0, fim: 0, gap: 0, raf: 0};
-      micEl.textContent = "Ouvindo o microfone. Combine a velocidade (WPM) e a frequência (Hz) dos ajustes com o som que você vai captar.";
+      micStatus("Ouvindo o microfone. Combine a velocidade (WPM) e a frequência (Hz) dos ajustes com o som que você vai captar.");
       micLoop();
-    }, function(){ micFalha("Permissão de microfone negada ou indisponível."); });
+    }, function(err){
+      var n = err && err.name;
+      micFalha(n === "NotFoundError"
+        ? "Nenhum microfone foi encontrado neste aparelho."
+        : "O microfone foi bloqueado. Libere a permissão do microfone para este site nas configurações do navegador. Na prévia do Claude o navegador bloqueia o microfone: publique o site em https (por exemplo, no GitHub Pages) para usar.");
+    });
   }
   function micLoop(){
     var m = micEstado;
@@ -1744,7 +1760,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     cancelAnimationFrame(m.raf);
     m.stream.getTracks().forEach(function(t){ t.stop(); });
     try{ m.ctx.close(); }catch(e){}
-    micEl.textContent = "";
+    micStatus("");
   }
 
   /* Koch automático, estatísticas e desafio */
@@ -2075,4 +2091,4 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
 })();
 </script>
 </body>
-  </html>
+</html>
