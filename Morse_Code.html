@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Código Morse</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Zilla+Slab:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#34373b; --panel:#2b2e32; --line:#4a4e54; --text:#e6e4df; --muted:#9a9ea5; --accent:#d8b36a;
+  --bg:#34373b; --panel:#2b2e32; --line:#4a4e54; --text:#e6e4df; --muted:#a3a39c; --accent:#ece3cb; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
   color-scheme: dark;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
@@ -16,42 +16,42 @@
 }
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--text);font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;min-height:100vh}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Zilla Slab",Georgia,"Times New Roman",serif;font-size:1.05rem;line-height:1.5;min-height:100vh}
 main{display:flex;flex-direction:column;max-width:var(--main-w,46rem);margin:0 auto;padding:clamp(1.25rem,5vw,3rem) clamp(1rem,4vw,2rem)}
-h1{font-size:clamp(1.4rem,4.5vw,2rem);font-weight:600;margin:0 0 .4rem;letter-spacing:.02em}
+h1{font-size:clamp(1.9rem,6vw,2.7rem);font-weight:600;margin:0 0 1rem;letter-spacing:.01em;line-height:1.1}
 .hint{color:var(--muted);font-size:.9rem;line-height:1.6;margin:0 0 1.5rem}
 textarea{
   width:100%;min-height:8rem;resize:vertical;background:var(--panel);color:var(--text);
-  border:1px solid var(--line);border-radius:.6rem;padding:1rem;
-  font:inherit;font-size:1.4rem;letter-spacing:.15em;line-height:1.5;caret-color:var(--accent)
+  border:1px solid var(--line);border-radius:2px;padding:1rem;
+  font:inherit;font-family:var(--mono);font-size:1.3rem;letter-spacing:.15em;line-height:1.5;caret-color:var(--accent)
 }
 textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 textarea::placeholder{color:#6d7178;letter-spacing:.15em}
 .keys{display:flex;flex-wrap:wrap;gap:.5rem;margin:.75rem 0 2rem}
 button{
   flex:1 1 4rem;min-height:var(--btn-h,3rem);background:var(--panel);color:var(--text);border:1px solid var(--line);
-  border-radius:.5rem;font:inherit;font-size:1.2rem;cursor:pointer;touch-action:manipulation
+  border-radius:2px;font:inherit;font-size:1.15rem;cursor:pointer;touch-action:manipulation
 }
 button:hover{border-color:var(--accent)}
 button:active{background:var(--line)}
 button.small{font-size:.85rem;color:var(--muted)}
-h2{font-size:.95rem;font-weight:400;color:var(--muted);margin:0 0 .6rem}
+h2{font-size:.8rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 .5rem}
 .view{
-  min-height:5rem;background:var(--panel);border:1px solid var(--line);border-radius:.6rem;
+  min-height:5rem;background:var(--panel);border:1px solid var(--line);border-radius:2px;
   padding:1rem;display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .45rem;margin-bottom:1.5rem
 }
 .dot{width:.9rem;height:.9rem;border-radius:50%;background:var(--accent)}
-.dash{width:2.4rem;height:.9rem;border-radius:.45rem;background:var(--accent)}
+.dash{width:2.4rem;height:.9rem;border-radius:1px;background:var(--accent)}
 .sep{width:2px;height:1.8rem;background:var(--muted);margin:0 .5rem}
 .sep.w{margin-left:0}
 .empty{color:#6d7178;font-size:.9rem}
-.decoded{min-height:3.2rem;font-size:1.6rem;letter-spacing:.1em;word-break:break-word;margin:0}
-.settings{display:grid;gap:.9rem;background:var(--panel);border:1px solid var(--line);border-radius:.6rem;padding:1rem;margin-bottom:2rem}
+.decoded{min-height:3.2rem;font-size:1.9rem;font-weight:600;letter-spacing:.03em;line-height:1.25;word-break:break-word;margin:0}
+.settings{display:grid;gap:.9rem;padding:.4rem 0 1.5rem}
 .row{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
-.row label{flex:0 0 8rem;color:var(--muted);font-size:.9rem}
+.row label{flex:0 0 8rem;color:var(--muted);font-size:1rem}
 .row input[type=range]{flex:1 1 8rem;min-width:0;accent-color:var(--accent)}
 .row span{color:var(--muted);font-size:.9rem}
-select,input[type=number]{min-height:var(--ctl-h,2.4rem);background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:.4rem;padding:.5rem .6rem;font:inherit;font-size:1rem}
+select,input[type=number]{min-height:var(--ctl-h,2.4rem);background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:2px;padding:.5rem .6rem;font:inherit;font-size:1rem}
 input[type=number]{width:5.5rem}
 select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 [hidden]{display:none !important}
@@ -74,45 +74,53 @@ html[data-device="phone"] textarea{font-size:1.25rem}
 html[data-orient="landscape"][data-device="phone"] main{padding-top:1rem;padding-bottom:1rem}
 html[data-motion="reduce"] *{transition:none !important}
 .tabs{display:flex;gap:.5rem;margin:0 0 1.5rem;border-bottom:1px solid var(--line)}
-.tabs button{flex:1 1 0;min-height:var(--btn-h,3rem);border:0;border-bottom:3px solid transparent;border-radius:0;background:none;color:var(--muted);font-size:1rem}
+.tabs button{flex:1 1 0;min-height:var(--btn-h,3rem);border:0;border-bottom:3px solid transparent;border-radius:0;background:none;color:var(--muted);font-size:1.15rem;font-weight:600}
 .tabs button[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent)}
-.morse-out{font-size:1.2rem;letter-spacing:.12em;line-height:1.6}
+.morse-out{font-family:var(--mono);font-size:1.1rem;letter-spacing:.1em;line-height:1.6}
 #detectar{background:var(--accent);color:#2b2e32;border-color:var(--accent);font-size:.95rem;font-weight:600}
 #detectar:hover,#detectar:active{background:var(--accent);filter:brightness(1.1)}
 .tabela{display:grid;grid-template-columns:repeat(auto-fill,minmax(5rem,1fr));gap:.5rem;margin-bottom:.5rem}
 .tabela.pros{grid-template-columns:repeat(auto-fill,minmax(9.5rem,1fr))}
 .cel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;padding:.6rem .3rem;flex:none}
 .cel strong{font-size:1.3rem;color:var(--text)}
-.cel span{color:var(--accent);letter-spacing:.12em;font-size:.95rem}
+.cel span{font-family:var(--mono);color:var(--accent);letter-spacing:.12em;font-size:.95rem}
 .cel small{color:var(--muted);font-size:.75rem;text-align:center}
 .info{margin:0 0 1.5rem;padding-left:1.2rem;line-height:1.7}
 .info li{margin-bottom:.4rem}
 .info b{color:var(--accent);font-weight:600}
 .legend{order:3}
-.settings{order:2}
+.ajustes{order:2;border-top:1px solid var(--line);margin-bottom:1.5rem}
+.ajustes summary{padding:.9rem 0;cursor:pointer;font-size:1.2rem;font-weight:600;list-style:none}
+.ajustes summary::-webkit-details-marker{display:none}
+.ajustes summary::after{content:"+";float:right}
+.ajustes[open] summary::after{content:"\2212"}
+.grupo{margin:1rem 0 0;padding-top:.9rem;border-top:1px solid var(--line);font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.settings .grupo:first-child{margin-top:0;padding-top:0;border-top:0}
+.playbar{order:1;display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:2rem}
+.playbar button{flex:1 1 9rem;font-size:1rem}
 #out-dec{order:1;margin-bottom:1.5rem}
 .ativ-tipos{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
 .ativ-tipos button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
 .ativ-enun{margin:0 0 .8rem;line-height:1.6}
-#ativ-resp{flex:1 1 10rem;min-width:0;min-height:var(--btn-h,3rem);background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:.5rem;padding:.7rem .8rem;font:inherit;font-size:1.2rem;letter-spacing:.1em;line-height:1.4;resize:vertical}
+#ativ-resp{flex:1 1 10rem;min-width:0;min-height:var(--btn-h,3rem);background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:2px;padding:.7rem .8rem;font:inherit;font-family:var(--mono);font-size:1.15rem;letter-spacing:.1em;line-height:1.4;resize:vertical}
 #ativ-resp:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .ativ-fb{min-height:1.6rem;margin:.6rem 0 1rem}
 html[data-device="phone"] .tabs{gap:.25rem}
-html[data-device="phone"] .tabs button{font-size:.78rem}
+html[data-device="phone"] .tabs button{font-size:.92rem}
 .chips{grid-template-columns:repeat(auto-fill,minmax(3rem,1fr));margin:.6rem 0}
 .chip{flex:none;min-height:2.6rem;padding:0;font-size:1.1rem}
 .chip[aria-pressed="true"]{background:var(--accent);color:#2b2e32;border-color:var(--accent);font-weight:600}
-details.saber{background:var(--panel);border:1px solid var(--line);border-radius:.6rem;padding:.75rem 1rem;margin-bottom:1rem}
+details.saber{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:.7rem 0;margin-bottom:1rem}
 details.saber summary{cursor:pointer}
-.ativ-texto{margin:0 0 .8rem;padding:.8rem 1rem;background:var(--panel);border:1px solid var(--line);border-radius:.6rem;font-size:1.1rem;line-height:1.6;letter-spacing:.05em;max-height:14rem;overflow:auto}
+.ativ-texto{margin:0 0 .8rem;padding:.8rem 1rem;background:var(--panel);border:1px solid var(--line);border-radius:2px;font-size:1.15rem;line-height:1.6;letter-spacing:.04em;max-height:14rem;overflow:auto}
 #ativ-visual{max-height:16rem;overflow:auto}
 #pisco{position:fixed;inset:0;z-index:900;pointer-events:none;opacity:0}
-input[type=color]{width:3rem;height:2.6rem;padding:0;border:1px solid var(--line);border-radius:.4rem;background:var(--panel);cursor:pointer;flex:none}
+input[type=color]{width:3rem;height:2.6rem;padding:0;border:1px solid var(--line);border-radius:2px;background:var(--panel);cursor:pointer;flex:none}
 #chave{display:block;width:100%;min-height:7rem;margin:.5rem 0 1rem;font-size:1.2rem;line-height:1.4;border:2px solid var(--accent);color:var(--accent);touch-action:none;user-select:none;-webkit-user-select:none}
 #chave.down{background:var(--accent);color:#2b2e32}
-#linkout{width:100%;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:.5rem;padding:.6rem;font:inherit;font-size:.85rem;margin-bottom:.6rem}
+#linkout{width:100%;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:2px;padding:.6rem;font:inherit;font-family:var(--mono);font-size:.85rem;margin-bottom:.6rem}
 .oculto{filter:blur(8px);user-select:none}
-.estchip{display:inline-block;margin:.2rem .3rem .2rem 0;padding:.25rem .55rem;border:1px solid var(--line);border-radius:.4rem;font-size:.85rem}
+.estchip{display:inline-block;margin:.2rem .3rem .2rem 0;padding:.2rem .5rem;border:1px solid var(--line);border-radius:2px;font-family:var(--mono);font-size:.85rem}
 .estchip.bom{border-color:var(--accent);color:var(--accent)}
 .caret{width:2px;height:2.2rem;border-radius:1px;background:var(--text);margin:0 .1rem}
 .btns{display:flex;flex-wrap:wrap;gap:.5rem}
@@ -130,7 +138,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
 <body>
 <div id="carregando" role="status" aria-live="polite">
   <div class="morse-load" aria-hidden="true"><i class="p"></i><i class="p"></i><i class="t"></i></div>
-  <p>Adaptando a interface...</p>
+  <p>Carregando…</p>
 </div>
 <div id="pisco" aria-hidden="true"></div>
 <main>
@@ -177,7 +185,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       <button id="baixarwav" type="button">Baixar áudio (.wav)</button>
     </div>
     <input type="text" id="linkout" readonly hidden aria-label="Link da mensagem">
-    <p class="hint" style="margin:0 0 2rem;font-size:.8rem">O link abre o site já com a mensagem em Morse, com a tradução escondida, como um enigma para o amigo decifrar. O download do .wav funciona no site publicado (por exemplo, no GitHub Pages) ou aberto direto do arquivo. Na prévia do Claude ele pode ficar bloqueado.</p>
+    <p class="hint" style="margin:0 0 2rem;font-size:.8rem">O link abre o site com a mensagem em Morse e a tradução escondida: um enigma para o amigo. O .wav só baixa no site publicado ou aberto direto do arquivo.</p>
   </div>
 
   <div id="pane-apr" hidden>
@@ -277,7 +285,10 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     <p class="hint" id="ativ-placar" style="margin:1rem 0 2rem"></p>
   </div>
 
+  <details class="ajustes">
+  <summary>Ajustes</summary>
   <div class="settings">
+    <h3 class="grupo">Som e voz</h3>
     <div class="row">
       <label for="sw">Som ao digitar</label>
       <button type="button" id="sw" class="switch" role="switch" aria-checked="true" aria-label="Som ao digitar"></button>
@@ -310,6 +321,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       <button type="button" id="detectar" class="small" style="flex:none;min-height:2.6rem;padding:0 .8rem">Detectar localização</button>
     </div>
     <p class="hint" id="langnota" style="margin:0"></p>
+    <h3 class="grupo">Velocidade e tom</h3>
     <div class="row">
       <label for="wpm">Velocidade</label>
       <select id="wpm">
@@ -339,6 +351,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       <input type="range" id="vol" min="0" max="100" step="1" value="30">
       <span id="volv">30%</span>
     </div>
+    <h3 class="grupo">Efeitos</h3>
     <div class="row">
       <label for="swpisc">Piscar a tela</label>
       <button type="button" id="swpisc" class="switch" role="switch" aria-checked="false" aria-label="Piscar a tela"></button>
@@ -355,7 +368,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
         <input type="range" id="pisc-op" min="5" max="100" step="1" value="40">
         <span id="pisc-opv">40%</span>
       </div>
-      <p class="hint" style="margin:0;font-size:.8rem">Aviso: luzes piscando podem causar desconforto ou crises em pessoas sensíveis. Prefira opacidade baixa e velocidades menores.</p>
+      <p class="hint" style="margin:0;font-size:.8rem">Cuidado: luz piscando pode incomodar ou causar crises em quem tem fotossensibilidade. Use opacidade baixa e velocidade menor.</p>
     </div>
     <div class="row">
       <label for="swvib">Vibrar (celular)</label>
@@ -375,8 +388,9 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
     <div class="row" id="fark-opts" hidden>
       <label for="farkw">Velocidade geral</label>
       <input type="number" id="farkw" min="1" max="60" step="1" value="8" inputmode="numeric">
-      <span>Cada letra toca no WPM acima, e as pausas ficam maiores para a velocidade geral ser esta. Ajuda quem está começando.</span>
+      <span>Cada letra toca no WPM acima. As pausas crescem até a velocidade geral ficar assim. Bom para começar.</span>
     </div>
+    <h3 class="grupo">Escrever com botão ou microfone</h3>
     <div class="row">
       <label for="swchave">Botão de Morse</label>
       <button type="button" id="swchave" class="switch" role="switch" aria-checked="false" aria-label="Botão de Morse"></button>
@@ -388,14 +402,13 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       <span id="swmicv">Desligado</span>
     </div>
     <p class="hint" id="mic-nota" hidden style="margin:0;font-size:.8rem"></p>
-    <p class="hint" style="margin:0;font-size:.8rem">O botão de Morse e o microfone escrevem na aba Decodificar. Para o microfone funcionar, combine a velocidade (WPM) e a frequência (Hz) com o som que vai captar.</p>
+    <p class="hint" style="margin:0;font-size:.8rem">O botão de Morse e o microfone escrevem na aba Decodificar. No microfone, use o mesmo WPM e a mesma frequência do som captado.</p>
     <div class="btns">
       <button id="testar" type="button">Testar som</button>
-      <button id="play" type="button">Tocar mensagem</button>
-      <button id="repetir" type="button">Repetir frase</button>
       <button id="restaurar" type="button">Restaurar padrões</button>
     </div>
   </div>
+  </details>
 
   <div id="out-dec">
   <div id="enigma" hidden class="hint" style="margin-bottom:1rem">Você recebeu uma mensagem secreta em Morse! Tente decifrar pelos símbolos ou de ouvido. <button type="button" id="revelar" class="small" style="flex:none;min-height:2.4rem;padding:0 .8rem;margin-left:.5rem">Mostrar tradução</button></div>
@@ -404,6 +417,11 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
   <h2>O que você escreveu</h2>
   <div class="view" id="visual" aria-live="polite"></div>
 
+  </div>
+
+  <div class="playbar" id="playbar">
+    <button id="play" type="button">Tocar mensagem</button>
+    <button id="repetir" type="button">Repetir frase</button>
   </div>
 
   <p class="legend">
@@ -829,6 +847,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       document.getElementById("tab-" + k).setAttribute("aria-selected", String(k === m));
     });
     document.getElementById("out-dec").hidden = (m !== "dec");
+    document.getElementById("playbar").hidden = (m === "apr" || m === "ati");
   }
   document.getElementById("tab-dec").addEventListener("click", function(){ setMode("dec"); });
   document.getElementById("tab-enc").addEventListener("click", function(){ setMode("enc"); renderEnc(); });
@@ -1727,7 +1746,7 @@ button.switch[aria-checked="true"]::after{transform:translateX(1.6rem)}
       var n = err && err.name;
       micFalha(n === "NotFoundError"
         ? "Nenhum microfone foi encontrado neste aparelho."
-        : "O microfone foi bloqueado. Libere a permissão do microfone para este site nas configurações do navegador. Na prévia do Claude o navegador bloqueia o microfone: publique o site em https (por exemplo, no GitHub Pages) para usar.");
+        : "O microfone foi bloqueado. Libere a permissão do microfone para este site nas configurações do navegador. Ele só funciona em páginas https.");
     });
   }
   function micLoop(){
